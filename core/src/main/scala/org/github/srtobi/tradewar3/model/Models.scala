@@ -14,7 +14,8 @@ enum Faction(val color: Color, isEnemy: Boolean):
 
 case class Company(
     name: String,
-    price: Int
+    price: Int,
+    nextUpdate: Float = 0f
 )
 
 case class HexCoordinate(q: Int, r: Int):
@@ -29,5 +30,6 @@ case class GameState(
     money: Long,
     companies: Seq[Company],
     holdings: Map[Faction, Map[String, Int]],
-    countries: Seq[Country]
+    countries: Seq[Country],
+    bulkAmount: Int = 1
 )

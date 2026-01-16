@@ -13,7 +13,8 @@ lazy val core = (project in file("core"))
   .settings(
     name := "tradewar3-core",
     libraryDependencies ++= Seq(
-      "com.badlogicgames.gdx" % "gdx" % libgdxVersion
+      "com.badlogicgames.gdx" % "gdx" % libgdxVersion,
+      "com.badlogicgames.gdx" % "gdx-freetype" % libgdxVersion
     ),
   )
 
@@ -23,7 +24,8 @@ lazy val desktop = (project in file("desktop"))
     name := "tradewar3-desktop",
     libraryDependencies ++= Seq(
       "com.badlogicgames.gdx" % "gdx-backend-lwjgl" % libgdxVersion,
-      "com.badlogicgames.gdx" % "gdx-platform" % libgdxVersion classifier "natives-desktop"
+      "com.badlogicgames.gdx" % "gdx-platform" % libgdxVersion classifier "natives-desktop",
+      "com.badlogicgames.gdx" % "gdx-freetype-platform" % libgdxVersion classifier "natives-desktop"
     ),
   ).dependsOn(core)
 

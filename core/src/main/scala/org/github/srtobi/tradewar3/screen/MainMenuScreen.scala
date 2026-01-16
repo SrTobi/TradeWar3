@@ -3,6 +3,8 @@ package org.github.srtobi.tradewar3.screen
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.graphics.{Color, Pixmap, Texture}
 import com.badlogic.gdx.graphics.g2d.BitmapFont
+import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator
+import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator.FreeTypeFontParameter
 import com.badlogic.gdx.scenes.scene2d.{Actor, Stage}
 import com.badlogic.gdx.scenes.scene2d.ui.{Label, Skin, Table, TextButton}
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener
@@ -29,8 +31,7 @@ class MainMenuScreen(game: Tradewar3) extends BaseScreen:
     
     startButton.addListener(new ChangeListener {
       override def changed(event: ChangeListener.ChangeEvent, actor: Actor): Unit =
-        // For now just print, will implement GameScreen in later tasks
-        println("Start Game Pressed")
+        game.setScreen(new GameScreen(game))
     })
     
     quitButton.addListener(new ChangeListener {
@@ -40,9 +41,9 @@ class MainMenuScreen(game: Tradewar3) extends BaseScreen:
     
     table.add(titleLabel).padBottom(50)
     table.row()
-    table.add(startButton).pad(10).width(200).height(50)
+    table.add(startButton).pad(10).width(300).height(70)
     table.row()
-    table.add(quitButton).pad(10).width(200).height(50)
+    table.add(quitButton).pad(10).width(300).height(70)
 
   override def render(delta: Float): Unit =
     clearScreen()
@@ -63,12 +64,19 @@ class MainMenuScreen(game: Tradewar3) extends BaseScreen:
 
   private def createSimpleSkin(): Skin =
     val skin = new Skin()
-    val font = new BitmapFont()
+    val generator = new FreeTypeFontGenerator(Gdx.files.internal("assets/fonts/Roboto-Regular.ttf"))
+    
+    val parameter = new FreeTypeFontParameter()
+    parameter.size = 24
+    val font = generator.generateFont(parameter)
     skin.add("default", font)
 
-    val titleFont = new BitmapFont()
-    titleFont.getData.setScale(2.5f)
+    val titleParameter = new FreeTypeFontParameter()
+    titleParameter.size = 48
+    val titleFont = generator.generateFont(titleParameter)
     skin.add("title", titleFont)
+    
+    generator.dispose()
     
     val pixmap = new Pixmap(1, 1, Pixmap.Format.RGBA8888)
     pixmap.setColor(Color.WHITE)

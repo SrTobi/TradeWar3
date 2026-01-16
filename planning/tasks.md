@@ -8,14 +8,14 @@
 5. [x] Add "Start New Game" and "Quit" buttons to the main menu.
 
 ## Phase 2: Stock Market System
-6. [ ] Create `Company` and `StockMarket` data model classes.
-7. [ ] Implement price simulation logic using a clamped normal distribution (1-4000).
-8. [ ] Implement random time intervals for stock price updates (0.5 to 4 seconds).
-9. [ ] Create the left-side UI panel for the stock market (balance, companies, prices, holdings).
-10. [ ] Implement Buy/Sell buttons with bulk purchase (X) logic and "Buy Max" fallback.
-11. [ ] Add functionality to buy an increase of the bulk purchase amount X.
-12. [ ] Implement keyboard shortcuts (Space to repeat last action).
-13. [ ] Add button validation (disable when no effect).
+6. [x] Create `Company` and `StockMarket` data model classes.
+7. [x] Implement price simulation logic using a clamped normal distribution (1-4000).
+8. [x] Implement random time intervals for stock price updates (0.5 to 4 seconds).
+9. [x] Create the left-side UI panel for the stock market (balance, companies, prices, holdings).
+10. [x] Implement Buy/Sell buttons with bulk purchase (X) logic and "Buy Max" fallback.
+11. [x] Add functionality to buy an increase of the bulk purchase amount X.
+12. [x] Implement keyboard shortcuts (Space to repeat last action).
+13. [x] Add button validation (disable when no effect).
 
 ## Phase 3: War Map & Hexagonal Grid
 14. [ ] Implement hexagonal grid system coordinate math and neighbor detection.
