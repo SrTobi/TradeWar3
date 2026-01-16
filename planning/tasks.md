@@ -1,11 +1,11 @@
 # Task List - TradeWar 3: Galaxy
 
 ## Phase 1: Foundation & Main Menu
-1. [ ] Define core data models for the Game State (Players, Companies, Map).
-2. [ ] Implement a Screen switcher for transitioning between menus and the game.
-3. [ ] Create a basic LibGDX Screen for the main menu.
-4. [ ] Implement an animated starfield background for the main menu.
-5. [ ] Add "Start New Game" and "Quit" buttons to the main menu.
+1. [x] Define core data models for the Game State (Players, Companies, Map).
+2. [x] Implement a Screen switcher for transitioning between menus and the game.
+3. [x] Create a basic LibGDX Screen for the main menu.
+4. [x] Implement an animated starfield background for the main menu.
+5. [x] Add "Start New Game" and "Quit" buttons to the main menu.
 
 ## Phase 2: Stock Market System
 6. [ ] Create `Company` and `StockMarket` data model classes.
