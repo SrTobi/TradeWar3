@@ -1,0 +1,12 @@
+lib/
+libs/
+target/
+src_managed/
+project/boot/
+project/plugins/project
+bin/
+gen/
+
+.bsp
+.idea
+.junie
