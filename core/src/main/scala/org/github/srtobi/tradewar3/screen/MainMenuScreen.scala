@@ -12,10 +12,12 @@ import com.badlogic.gdx.utils.viewport.ScreenViewport
 import org.github.srtobi.tradewar3.Tradewar3
 import org.github.srtobi.tradewar3.ui.StarfieldBackground
 
+import scala.compiletime.uninitialized
+
 class MainMenuScreen(game: Tradewar3) extends BaseScreen:
   private val stage = new Stage(new ScreenViewport())
   private val starfield = new StarfieldBackground()
-  private var skin: Skin = _
+  private var skin: Skin = uninitialized
 
   override def show(): Unit =
     Gdx.input.setInputProcessor(stage)

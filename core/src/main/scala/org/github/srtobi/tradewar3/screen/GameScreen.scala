@@ -9,18 +9,21 @@ import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener
 import com.badlogic.gdx.scenes.scene2d.{Actor, Stage}
 import com.badlogic.gdx.utils.viewport.ScreenViewport
 import org.github.srtobi.tradewar3.Tradewar3
-import org.github.srtobi.tradewar3.logic.StockMarket
+import org.github.srtobi.tradewar3.logic.{MapGenerator, StockMarket, WarMap}
 import org.github.srtobi.tradewar3.model.*
-import org.github.srtobi.tradewar3.ui.StockMarketUI
+import org.github.srtobi.tradewar3.ui.{StockMarketUI, WarMapUI}
+
+import scala.compiletime.uninitialized
 
 class GameScreen(game: Tradewar3) extends BaseScreen:
   private val stage = new Stage(new ScreenViewport())
-  private var skin: Skin = _
-  private var gameState: GameState = _
+  private var skin: Skin = uninitialized
+  private var gameState: GameState = uninitialized
   
   // UI Components
-  private var stockMarketUI: StockMarketUI = _
-  private var lastAction: () => Unit = _
+  private var stockMarketUI: StockMarketUI = uninitialized
+  private var warMapUI: WarMapUI = uninitialized
+  private var lastAction: () => Unit = uninitialized
 
   private val companyNames = Seq(
     "Nebula Corp", "Star Dynamics", "Galactic Mining", "Void Energy", "Orbit Logistics",
@@ -41,7 +44,7 @@ class GameScreen(game: Tradewar3) extends BaseScreen:
       money = 10000,
       companies = companies,
       holdings = Map(Faction.Player -> selectedNames.map(_ -> 0).toMap),
-      countries = Seq.empty, // To be implemented in Phase 3
+      countries = MapGenerator.generateMap(3),
       bulkAmount = 1
     )
 
@@ -66,12 +69,15 @@ class GameScreen(game: Tradewar3) extends BaseScreen:
     )
     stockMarketUI.init(gameState)
 
-    // Right Panel: War Map (Placeholder)
-    val warMapTable = new Table()
-    warMapTable.add(new Label("War Map Placeholder", skin))
+    // Right Panel: War Map
+    warMapUI = new WarMapUI(skin, coords => {
+      placeUnits(coords)
+      lastAction = () => placeUnits(coords)
+    })
+    warMapUI.update(gameState)
 
     rootTable.add(stockMarketUI).expandY().fill().width(Value.percentWidth(0.33f, rootTable))
-    rootTable.add(warMapTable).expandY().fill().expandX()
+    rootTable.add(warMapUI).expandY().fill().expandX()
     
     updateUI()
 
@@ -104,6 +110,12 @@ class GameScreen(game: Tradewar3) extends BaseScreen:
       )
       updateUI()
 
+  private def placeUnits(coords: HexCoordinate): Unit =
+    val oldMoney = gameState.money
+    gameState = WarMap.placeUnits(gameState, coords, gameState.bulkAmount)
+    if gameState.money != oldMoney then
+        updateUI()
+
   private def increaseBulk(): Unit =
     val cost = StockMarket.getBulkUpgradeCost(gameState.bulkAmount)
     if gameState.money >= cost then
@@ -115,6 +127,7 @@ class GameScreen(game: Tradewar3) extends BaseScreen:
 
   private def updateUI(): Unit =
     stockMarketUI.update(gameState)
+    if warMapUI != null then warMapUI.update(gameState)
 
   override def render(delta: Float): Unit =
     clearScreen()
@@ -141,14 +154,14 @@ class GameScreen(game: Tradewar3) extends BaseScreen:
   private def createGameSkin(): Skin =
     val skin = new Skin()
     val generator = new FreeTypeFontGenerator(Gdx.files.internal("assets/fonts/Roboto-Regular.ttf"))
-    
+
     val parameter = new FreeTypeFontParameter()
-    parameter.size = 26
+    parameter.size = 32
     val font = generator.generateFont(parameter)
     skin.add("default", font)
     
     val bigParameter = new FreeTypeFontParameter()
-    bigParameter.size = 36
+    bigParameter.size = 42
     val bigFont = generator.generateFont(bigParameter)
     skin.add("big", bigFont)
     

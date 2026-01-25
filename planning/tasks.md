@@ -18,12 +18,12 @@
 13. [x] Add button validation (disable when no effect).
 
 ## Phase 3: War Map & Hexagonal Grid
-14. [ ] Implement hexagonal grid system coordinate math and neighbor detection.
-15. [ ] Generate the hexagonal map and assign starting countries to 5 factions.
-16. [ ] Initialize unit counts for players (10) and neutral countries (5-20).
-17. [ ] Render the hex grid with faction-specific colors.
-18. [ ] Display unit counts within occupied hexagons.
-19. [ ] Implement unit placement logic on owned or adjacent hexes.
+14. [x] Implement hexagonal grid system coordinate math and neighbor detection.
+15. [x] Generate the hexagonal map and assign starting countries to 5 factions.
+16. [x] Initialize unit counts for players (10) and neutral countries (5-20).
+17. [x] Render the hex grid with faction-specific colors.
+18. [x] Display unit counts within occupied hexagons.
+19. [x] Implement unit placement logic on owned or adjacent hexes.
 
 ## Phase 4: Battle System & Game Logic
 20. [ ] Implement periodic battle checks (1-7 seconds per country).

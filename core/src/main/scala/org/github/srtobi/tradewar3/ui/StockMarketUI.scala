@@ -7,15 +7,17 @@ import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener
 import org.github.srtobi.tradewar3.model.{Faction, GameState}
 import org.github.srtobi.tradewar3.logic.StockMarket
 
+import scala.compiletime.uninitialized
+
 class StockMarketUI(skin: Skin,
                     onBuy: String => Unit,
                     onSell: String => Unit,
                     onUpgradeBulk: () => Unit) extends Table(skin):
   
-  private var balanceLabel: Label = _
-  private var companyRows: Seq[CompanyRow] = _
-  private var bulkLabel: Label = _
-  private var increaseBulkButton: TextButton = _
+  private var balanceLabel: Label = uninitialized
+  private var companyRows: Seq[CompanyRow] = uninitialized
+  private var bulkLabel: Label = uninitialized
+  private var increaseBulkButton: TextButton = uninitialized
 
   private case class CompanyRow(
     nameLabel: Label,

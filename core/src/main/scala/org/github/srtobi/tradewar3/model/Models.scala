@@ -20,11 +20,21 @@ case class Company(
 
 case class HexCoordinate(q: Int, r: Int):
   def s: Int = -q - r
+  def +(other: HexCoordinate): HexCoordinate = HexCoordinate(q + other.q, r + other.r)
+  def neighbors: Seq[HexCoordinate] = HexCoordinate.directions.map(this + _)
+
+object HexCoordinate:
+  val directions = Seq(
+    HexCoordinate(1, 0), HexCoordinate(1, -1), HexCoordinate(0, -1),
+    HexCoordinate(-1, 0), HexCoordinate(-1, 1), HexCoordinate(0, 1)
+  )
 
 case class Country(
     coords: HexCoordinate,
     units: Map[Faction, Int] = Map.empty
-)
+):
+  def owner: Faction = units.maxByOption(_._2).map(_._1).getOrElse(Faction.Neutral)
+  def unitCount: Int = units.values.sum
 
 case class GameState(
     money: Long,
