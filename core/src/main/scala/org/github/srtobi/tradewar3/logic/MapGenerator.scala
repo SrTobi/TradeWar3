@@ -14,7 +14,7 @@ object MapGenerator:
     val availableCountries = Random.shuffle(countries)
     
     val assignedCountries = availableCountries.zipWithIndex.map { (country, index) =>
-      val nextBattle = Random.nextFloat() * 6f + 1f
+      val nextBattle = Random.nextFloat() * 5f + 1f
       if index < factions.size then
         country.copy(units = Map(factions(index) -> 10), nextBattleUpdate = nextBattle)
       else

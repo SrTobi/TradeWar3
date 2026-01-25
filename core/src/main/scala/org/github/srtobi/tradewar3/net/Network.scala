@@ -7,7 +7,7 @@ sealed trait NetworkMessage extends Serializable
 
 case class JoinRequest(playerName: String) extends NetworkMessage
 case class JoinResponse(faction: Faction) extends NetworkMessage
-case class LobbyUpdate(players: Seq[(String, Faction)]) extends NetworkMessage
+case class LobbyUpdate(players: Seq[Faction]) extends NetworkMessage
 case object StartGame extends NetworkMessage
 case class GameStateUpdate(state: GameState) extends NetworkMessage
 

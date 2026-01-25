@@ -15,7 +15,7 @@ class GameClient(host: String, port: Int) {
   
   private var latestState: Option[GameState] = None
   private var assignedFaction: Option[Faction] = None
-  private var lobbyPlayers: Seq[(String, Faction)] = Seq.empty
+  private var lobbyPlayers: Seq[Faction] = Seq.empty
   private var gameStarted: Boolean = false
 
   private val thread = new Thread(() => {
@@ -40,6 +40,9 @@ class GameClient(host: String, port: Int) {
       case _: Throwable =>
     }
   }, "GameClient-Receiver")
+
+  def getFactionColors = new FactionColors(assignedFaction.get, lobbyPlayers)
+
   thread.setDaemon(true)
   thread.start()
 
@@ -63,7 +66,7 @@ class GameClient(host: String, port: Int) {
   
   def getAssignedFaction: Option[Faction] = assignedFaction
   
-  def getLobbyPlayers: Seq[(String, Faction)] = lobbyPlayers
+  def getFactions: Seq[Faction] = lobbyPlayers
   
   def isGameStarted: Boolean = gameStarted
 

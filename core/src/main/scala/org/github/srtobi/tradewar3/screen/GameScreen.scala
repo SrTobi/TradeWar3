@@ -22,13 +22,14 @@ class GameScreen(game: Tradewar3,
   private val stage = new Stage(new ScreenViewport())
   private var skin: Skin = uninitialized
   private var gameState: GameState = uninitialized
-  private var localFaction: Faction = uninitialized
-  private var factionColors: FactionColors = uninitialized
   
   // UI Components
   private var stockMarketUI: StockMarketUI = uninitialized
   private var warMapUI: WarMapUI = uninitialized
   private var lastAction: () => Unit = uninitialized
+
+  private var localFaction: Faction = client.getAssignedFaction.get
+  val factionColors: FactionColors = client.getFactionColors
 
   private val companyNames = Seq(
     "Nebula Corp", "Star Dynamics", "Galactic Mining", "Void Energy", "Orbit Logistics",
@@ -38,9 +39,6 @@ class GameScreen(game: Tradewar3,
   override def show(): Unit =
     Gdx.input.setInputProcessor(stage)
     skin = createGameSkin()
-    
-    localFaction = client.getAssignedFaction.getOrElse(Faction.Neutral)
-    factionColors = new FactionColors(localFaction)
 
     setupUI()
 
@@ -155,11 +153,6 @@ class GameScreen(game: Tradewar3,
       gameState = newState
       if isFirstState then stockMarketUI.init(gameState, localFaction)
       updateUI()
-    }
-    client.getAssignedFaction.foreach { faction =>
-      localFaction = faction
-      if factionColors == null || factionColors.localFaction != localFaction then
-        factionColors = new FactionColors(localFaction)
     }
 
     server.foreach { s =>

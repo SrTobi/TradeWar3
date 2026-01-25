@@ -8,22 +8,29 @@ case class Faction(name: String) extends Serializable:
 
 object Faction:
   val Neutral = Faction("Neutral")
-  val Player1 = Faction("Player 1")
-  val Player2 = Faction("Player 2")
-  val Player3 = Faction("Player 3")
-  val Player4 = Faction("Player 4")
-  
-  val AllPlayers = Seq(Player1, Player2, Player3, Player4)
 
-class FactionColors(val localFaction: Faction):
-  private val otherFactions = Faction.AllPlayers.filter(_ != localFaction)
-  private val otherColors = Seq(Color.RED, Color.YELLOW, Color.ORANGE)
-  private val colorMap = otherFactions.zip(otherColors).toMap
+class FactionColors(val localFaction: Faction, allFactions: Seq[Faction]):
+  private val colorMap = {
+    val otherFactions = allFactions.filter(_ != localFaction)
+    otherFactions.zip(FactionColors.EnemyColors).toMap
+  }
 
   def apply(faction: Faction): Color =
     if faction == localFaction then Color.BLUE
     else if faction.isNeutral then Color.GRAY
     else colorMap.getOrElse(faction, Color.WHITE)
+
+object FactionColors:
+  val EnemyColors: Seq[Color] = Seq(
+    Color.RED,
+    Color.YELLOW,
+    Color.ORANGE,
+    Color.CYAN,
+    Color.GREEN,
+    Color.MAGENTA,
+    Color.LIME,
+    Color.SALMON,
+  )
 
 case class Company(
     name: String,

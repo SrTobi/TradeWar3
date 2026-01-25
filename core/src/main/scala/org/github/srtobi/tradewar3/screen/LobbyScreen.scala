@@ -23,7 +23,7 @@ class LobbyScreen(game: Tradewar3,
   private val starfield = new StarfieldBackground()
   private var skin: Skin = uninitialized
   private var playerTable: Table = uninitialized
-  private var lastPlayers: Seq[(String, Faction)] = Seq.empty
+  private var lastFactions: Seq[Faction] = Seq.empty
   private val companyNames = Seq(
     "Nebula Corp", "Star Dynamics", "Galactic Mining", "Void Energy", "Orbit Logistics",
     "Comet Tech", "Pulsar Systems", "Titan Alloys", "Quasar Media", "Nova Pharma"
@@ -63,9 +63,8 @@ class LobbyScreen(game: Tradewar3,
     rootTable.add(backButton).pad(10).width(300).height(70)
 
   private def startGame(): Unit =
-    val players = client.getLobbyPlayers
-    val factions = players.map(_._2)
-    
+    val factions = client.getFactions
+
     // Initialize Game State
     val selectedNames = scala.util.Random.shuffle(companyNames).take(5)
     val companies = selectedNames.map(name => 
@@ -99,13 +98,12 @@ class LobbyScreen(game: Tradewar3,
     stage.draw()
 
   private def updatePlayerList(): Unit =
-    val players = client.getLobbyPlayers
-    if players != lastPlayers then
-      lastPlayers = players
+    val factions = client.getFactions
+    if factions != lastFactions then
+      lastFactions = factions
       playerTable.clearChildren()
-      val colors = new FactionColors(client.getAssignedFaction.getOrElse(Faction.Neutral))
-      players.foreach { (name, faction) =>
-        val label = new Label(s"$name - ${faction.name}", skin)
+      factions.foreach { faction =>
+        val label = new Label(faction.name, skin)
         playerTable.add(label).pad(5).row()
       }
 

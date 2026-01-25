@@ -1,17 +1,13 @@
 package org.github.srtobi.tradewar3.net
 
-import com.badlogic.gdx.Gdx
-import com.badlogic.gdx.Net
-import com.badlogic.gdx.graphics.Color
-import com.badlogic.gdx.net.ServerSocketHints
-import com.badlogic.gdx.net.Socket
-import com.badlogic.gdx.net.SocketHints
+import com.badlogic.gdx.{Gdx, Net}
+import com.badlogic.gdx.net.{ServerSocketHints, Socket}
 import org.github.srtobi.tradewar3.model.*
 
 import java.io.*
 import java.util.concurrent.CopyOnWriteArrayList
-import scala.util.control.NonFatal
 import scala.jdk.CollectionConverters.*
+import scala.util.control.NonFatal
 
 class GameServer(port: Int) {
   private val serverSocket = {
@@ -44,8 +40,8 @@ class GameServer(port: Int) {
     clients.forEach(_.send(message))
   }
 
-  def getPlayers: Seq[(String, Faction)] = {
-    clients.asScala.flatMap(c => c.playerName.zip(c.faction)).toSeq
+  def getPlayers: Seq[Faction] = {
+    clients.asScala.flatMap(_.faction).toSeq
   }
 
   def stop(): Unit = {
@@ -64,7 +60,6 @@ class GameServer(port: Int) {
     private val actionQueue = new java.util.concurrent.ConcurrentLinkedQueue[PlayerAction]()
     private var handlerRunning = true
     var faction: Option[Faction] = None
-    var playerName: Option[String] = None
 
     def send(message: NetworkMessage): Unit = {
       try {
@@ -95,17 +90,14 @@ class GameServer(port: Int) {
         while (handlerRunning) {
           val obj = in.readObject()
           obj match {
-            case JoinRequest(name) =>
-              val index = clients.indexOf(this)
-              val f = if index >= 0 && index < Faction.AllPlayers.size then 
-                Faction.AllPlayers(index)
-              else 
-                Faction.Neutral
-              faction = Some(f)
-              playerName = Some(name)
-              send(JoinResponse(f))
-              broadcast(LobbyUpdate(getPlayers))
-              Gdx.app.log("Server", s"Player $name joined as $f")
+            case JoinRequest(name)  =>
+              if (getPlayers.forall(p => p.name != name) && name != "Neutral") {
+                val f = Faction(name)
+                faction = Some(f)
+                send(JoinResponse(f))
+                broadcast(LobbyUpdate(getPlayers))
+                Gdx.app.log("Server", s"Player $name joined as $f")
+              }
             case action: PlayerAction =>
               actionQueue.add(action)
             case _ => Gdx.app.log("Server", s"Received unknown message: $obj")
