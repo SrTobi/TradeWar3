@@ -22,6 +22,7 @@ lazy val desktop = (project in file("desktop"))
   .settings(commonSettings: _*)
   .settings(
     name := "tradewar3-desktop",
+    assembly / mainClass := Some("org.github.srtobi.tradewar3.run"),
     libraryDependencies ++= Seq(
       "com.badlogicgames.gdx" % "gdx-backend-lwjgl" % libgdxVersion,
       "com.badlogicgames.gdx" % "gdx-platform" % libgdxVersion classifier "natives-desktop",
