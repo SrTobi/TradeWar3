@@ -26,10 +26,10 @@
 19. [x] Implement unit placement logic on owned or adjacent hexes.
 
 ## Phase 4: Battle System & Game Logic
-20. [ ] Implement periodic battle checks (1-7 seconds per country).
-21. [ ] Implement loss calculation logic based on unit counts and adjacency bonuses.
-22. [ ] Implement country ownership updates upon unit elimination.
-23. [ ] Implement win condition monitoring (one non-neutral player remaining).
+20. [x] Implement periodic battle checks (1-7 seconds per country).
+21. [x] Implement loss calculation logic based on unit counts and adjacency bonuses.
+22. [x] Implement country ownership updates upon unit elimination.
+23. [x] Implement win condition monitoring (one non-neutral player remaining).
 
 ## Phase 5: AI Opponents
 24. [ ] Implement Stock Market AI (buy low, sell high) following same constraints as player.

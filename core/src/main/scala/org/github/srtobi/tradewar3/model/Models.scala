@@ -31,7 +31,8 @@ object HexCoordinate:
 
 case class Country(
     coords: HexCoordinate,
-    units: Map[Faction, Int] = Map.empty
+    units: Map[Faction, Int] = Map.empty,
+    nextBattleUpdate: Float = 0f
 ):
   def owner: Faction = units.maxByOption(_._2).map(_._1).getOrElse(Faction.Neutral)
   def unitCount: Int = units.values.sum

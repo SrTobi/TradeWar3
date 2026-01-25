@@ -138,6 +138,12 @@ class GameScreen(game: Tradewar3) extends BaseScreen:
         gameState = gameState.copy(companies = updatedCompanies)
         updateUI()
 
+    val (updatedGameState, structuralChange) = WarMap.updateBattles(gameState, delta)
+    gameState = updatedGameState
+    if structuralChange then
+        updateUI()
+        checkWinCondition()
+
     if Gdx.input.isKeyJustPressed(Input.Keys.SPACE) && lastAction != null then
         lastAction()
 
@@ -150,6 +156,13 @@ class GameScreen(game: Tradewar3) extends BaseScreen:
   override def dispose(): Unit =
     stage.dispose()
     if skin != null then skin.dispose()
+
+  private def checkWinCondition(): Unit =
+    val activeFactions = gameState.countries.map(_.owner).filter(!_.isNeutral).distinct
+    if activeFactions.size <= 1 then
+        // Game Over - back to menu or show win message
+        // For now, just back to menu
+        game.setScreen(new MainMenuScreen(game))
 
   private def createGameSkin(): Skin =
     val skin = new Skin()
