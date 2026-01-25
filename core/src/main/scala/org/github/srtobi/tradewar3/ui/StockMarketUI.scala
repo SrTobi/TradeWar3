@@ -4,7 +4,7 @@ import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.scenes.scene2d.Actor
 import com.badlogic.gdx.scenes.scene2d.ui.{Label, Skin, Table, TextButton}
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener
-import org.github.srtobi.tradewar3.model.{Faction, GameState}
+import org.github.srtobi.tradewar3.model.{Faction, FactionColors, GameState}
 import org.github.srtobi.tradewar3.logic.StockMarket
 
 import scala.compiletime.uninitialized
@@ -12,7 +12,8 @@ import scala.compiletime.uninitialized
 class StockMarketUI(skin: Skin,
                     onBuy: String => Unit,
                     onSell: String => Unit,
-                    onUpgradeBulk: () => Unit) extends Table(skin):
+                    onUpgradeBulk: () => Unit,
+                    factionColors: FactionColors) extends Table(skin):
   
   private var balanceLabel: Label = uninitialized
   private var companyRows: Seq[CompanyRow] = uninitialized
@@ -29,16 +30,22 @@ class StockMarketUI(skin: Skin,
 
   setBackground(skin.newDrawable("white", new Color(0.1f, 0.1f, 0.1f, 1f)))
 
-  def init(state: GameState): Unit =
+  def init(state: GameState, faction: Faction): Unit =
     clearChildren()
-    balanceLabel = new Label(s"Balance: ${state.money} €", skin, "big")
+    val money = state.money.getOrElse(faction, 0L)
+    val factionLabel = new Label(s"Faction: ${faction.toString}", skin)
+    factionLabel.setColor(factionColors(faction))
+    add(factionLabel).pad(10).colspan(5).left()
+    row()
+    
+    balanceLabel = new Label(s"Balance: $money €", skin, "big")
     add(balanceLabel).pad(10).colspan(5).left()
     row()
 
     companyRows = state.companies.map { company =>
       val nameLabel = new Label(company.name, skin)
       val priceLabel = new Label(s"${company.price} €", skin)
-      val holdings = state.holdings(Faction.Player).getOrElse(company.name, 0)
+      val holdings = state.holdings.get(faction).flatMap(_.get(company.name)).getOrElse(0)
       val holdingsLabel = new Label(s"Owned: $holdings", skin)
       val buyButton = new TextButton("Buy", skin)
       val sellButton = new TextButton("Sell", skin)
@@ -63,8 +70,9 @@ class StockMarketUI(skin: Skin,
       CompanyRow(nameLabel, priceLabel, holdingsLabel, buyButton, sellButton)
     }
 
-    bulkLabel = new Label(s"Bulk Amount: ${state.bulkAmount}", skin)
-    increaseBulkButton = new TextButton(s"Upgrade Bulk (${StockMarket.getBulkUpgradeCost(state.bulkAmount)} €)", skin)
+    val bulkAmount = state.bulkAmount.getOrElse(faction, 1)
+    bulkLabel = new Label(s"Bulk Amount: $bulkAmount", skin)
+    increaseBulkButton = new TextButton(s"Upgrade (${StockMarket.getBulkUpgradeCost(bulkAmount)} €)", skin)
     increaseBulkButton.addListener(new ChangeListener {
       override def changed(event: ChangeListener.ChangeEvent, actor: Actor): Unit =
         onUpgradeBulk()
@@ -73,21 +81,23 @@ class StockMarketUI(skin: Skin,
     add(bulkLabel).pad(5).colspan(3).left()
     add(increaseBulkButton).pad(5).colspan(2).right().width(300).height(60)
 
-  def update(state: GameState): Unit =
+  def update(state: GameState, faction: Faction): Unit =
     if balanceLabel == null then return
     
-    balanceLabel.setText(s"Balance: ${state.money} €")
-    bulkLabel.setText(s"Bulk Amount: ${state.bulkAmount}")
+    val money = state.money.getOrElse(faction, 0L)
+    val bulkAmount = state.bulkAmount.getOrElse(faction, 1)
+    balanceLabel.setText(s"Balance: $money €")
+    bulkLabel.setText(s"Bulk Amount: $bulkAmount")
 
-    val upgradeCost = StockMarket.getBulkUpgradeCost(state.bulkAmount)
+    val upgradeCost = StockMarket.getBulkUpgradeCost(bulkAmount)
     increaseBulkButton.setText(s"Upgrade Bulk ($upgradeCost €)")
-    increaseBulkButton.setDisabled(state.money < upgradeCost)
+    increaseBulkButton.setDisabled(money < upgradeCost)
 
     state.companies.zip(companyRows).foreach { (company, row) =>
       row.priceLabel.setText(s"${company.price} €")
-      val holdings = state.holdings(Faction.Player).getOrElse(company.name, 0)
+      val holdings = state.holdings.get(faction).flatMap(_.get(company.name)).getOrElse(0)
       row.holdingsLabel.setText(s"Owned: $holdings")
 
-      row.buyButton.setDisabled(state.money < company.price.toLong)
+      row.buyButton.setDisabled(money < company.price.toLong)
       row.sellButton.setDisabled(holdings == 0)
     }

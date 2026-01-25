@@ -4,14 +4,13 @@ import org.github.srtobi.tradewar3.model.*
 import scala.util.Random
 
 object MapGenerator:
-  def generateMap(radius: Int): Seq[Country] =
+  def generateMap(radius: Int, factions: Seq[Faction]): Seq[Country] =
     val countries = for
       q <- -radius to radius
       r <- Math.max(-radius, -q - radius) to Math.min(radius, -q + radius)
     yield Country(HexCoordinate(q, r))
     
     // Assign starting factions
-    val factions = Seq(Faction.Player, Faction.Enemy1, Faction.Enemy2, Faction.Enemy3)
     val availableCountries = Random.shuffle(countries)
     
     val assignedCountries = availableCountries.zipWithIndex.map { (country, index) =>

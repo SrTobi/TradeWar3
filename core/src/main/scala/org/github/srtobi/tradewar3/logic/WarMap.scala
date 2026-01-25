@@ -1,19 +1,18 @@
 package org.github.srtobi.tradewar3.logic
 
 import org.github.srtobi.tradewar3.model.*
-import org.github.srtobi.tradewar3.model.Faction.Player
 
 object WarMap:
   val UnitCost = 100
 
-  def canPlaceUnits(gameState: GameState, coords: HexCoordinate): Boolean =
+  def canPlaceUnits(gameState: GameState, coords: HexCoordinate, faction: Faction): Boolean =
     gameState.countries.find(_.coords == coords) match
       case Some(country) =>
-        val isPresent = country.units.getOrElse(Faction.Player, 0) > 0
+        val isPresent = country.units.getOrElse(faction, 0) > 0
         val canSupportFromNeighbor = coords.neighbors.exists { nbCoords =>
           gameState.countries.find(_.coords == nbCoords).exists { neighbor =>
-            val myUnits = neighbor.units.getOrElse(Faction.Player, 0)
-            val otherUnits = neighbor.units.filter(_._1 != Faction.Player).values.sum
+            val myUnits = neighbor.units.getOrElse(faction, 0)
+            val otherUnits = neighbor.units.filter(_._1 != faction).values.sum
             myUnits > 2 * otherUnits
           }
         }
@@ -21,20 +20,21 @@ object WarMap:
         isPresent || canSupportFromNeighbor
       case None => false
 
-  def placeUnits(gameState: GameState, coords: HexCoordinate, amount: Int): GameState =
-    if !canPlaceUnits(gameState, coords) then return gameState
+  def placeUnits(gameState: GameState, coords: HexCoordinate, faction: Faction, amount: Int): GameState =
+    if !canPlaceUnits(gameState, coords, faction) then return gameState
     
     val country = gameState.countries.find(_.coords == coords).get
-    val maxAffordable = (gameState.money / UnitCost).toInt
+    val playerMoney = gameState.money.getOrElse(faction, 0L)
+    val maxAffordable = (playerMoney / UnitCost).toInt
     val amountToPlace = Math.min(amount, maxAffordable)
     
     if amountToPlace > 0 then
       val cost = amountToPlace.toLong * UnitCost
-      val newUnits = country.units + (Faction.Player -> (country.units.getOrElse(Faction.Player, 0) + amountToPlace))
+      val newUnits = country.units + (faction -> (country.units.getOrElse(faction, 0) + amountToPlace))
       
       val newCountry = country.copy(units = newUnits)
       gameState.copy(
-        money = gameState.money - cost,
+        money = gameState.money + (faction -> (playerMoney - cost)),
         countries = gameState.countries.map(c => if c.coords == coords then newCountry else c)
       )
     else

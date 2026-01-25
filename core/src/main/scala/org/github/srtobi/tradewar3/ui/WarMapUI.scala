@@ -5,12 +5,12 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer
 import com.badlogic.gdx.scenes.scene2d.ui.Skin
 import com.badlogic.gdx.scenes.scene2d.Actor
 import com.badlogic.gdx.graphics.g2d.{Batch, GlyphLayout}
-import org.github.srtobi.tradewar3.model.{GameState, HexCoordinate}
+import org.github.srtobi.tradewar3.model.{FactionColors, GameState, HexCoordinate}
 import org.github.srtobi.tradewar3.distanceSquared
 
 import scala.compiletime.uninitialized
 
-class WarMapUI(skin: Skin, onHexClick: HexCoordinate => Unit) extends Actor:
+class WarMapUI(skin: Skin, onHexClick: HexCoordinate => Unit, factionColors: FactionColors) extends Actor:
   private val shapeRenderer = new ShapeRenderer()
   private var gameState: GameState = uninitialized
   private val hexSize = 80f
@@ -47,7 +47,7 @@ class WarMapUI(skin: Skin, onHexClick: HexCoordinate => Unit) extends Actor:
     shapeRenderer.begin(ShapeRenderer.ShapeType.Filled)
     gameState.countries.foreach { country =>
       val (px, py) = hexToPixel(country.coords)
-      drawHexagon(centerX + px, centerY + py, hexSize, country.owner.color)
+      drawHexagon(centerX + px, centerY + py, hexSize, factionColors(country.owner))
     }
     shapeRenderer.end()
 
@@ -65,13 +65,13 @@ class WarMapUI(skin: Skin, onHexClick: HexCoordinate => Unit) extends Actor:
       val (px, py) = hexToPixel(country.coords)
 
       // Filter out factions with 0 units
-      val factionUnits = country.units.filter(_._2 > 0).toSeq.sortBy(_._1.ordinal)
+      val factionUnits = country.units.filter(_._2 > 0).toSeq.sortBy(_._1.name)
 
       val totalHeight = factionUnits.size * font.getLineHeight
       var currentY = centerY + py + (totalHeight / 2f)
 
       factionUnits.map { (faction, count) =>
-        val factionColor = faction.color
+        val factionColor = factionColors(faction)
         val fontColor =
           if (factionColor.distanceSquared(Color.BLACK) < factionColor.distanceSquared(Color.WHITE)) {
             Color.WHITE

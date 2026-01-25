@@ -12,13 +12,18 @@ import org.github.srtobi.tradewar3.Tradewar3
 import org.github.srtobi.tradewar3.logic.{MapGenerator, StockMarket, WarMap}
 import org.github.srtobi.tradewar3.model.*
 import org.github.srtobi.tradewar3.ui.{StockMarketUI, WarMapUI}
+import org.github.srtobi.tradewar3.net.*
 
 import scala.compiletime.uninitialized
 
-class GameScreen(game: Tradewar3) extends BaseScreen:
+class GameScreen(game: Tradewar3, 
+                 private val server: Option[GameServer], 
+                 private val client: GameClient) extends BaseScreen:
   private val stage = new Stage(new ScreenViewport())
   private var skin: Skin = uninitialized
   private var gameState: GameState = uninitialized
+  private var localFaction: Faction = uninitialized
+  private var factionColors: FactionColors = uninitialized
   
   // UI Components
   private var stockMarketUI: StockMarketUI = uninitialized
@@ -34,19 +39,8 @@ class GameScreen(game: Tradewar3) extends BaseScreen:
     Gdx.input.setInputProcessor(stage)
     skin = createGameSkin()
     
-    // Initialize Game State
-    val selectedNames = scala.util.Random.shuffle(companyNames).take(5)
-    val companies = selectedNames.map(name => 
-      Company(name, StockMarket.generateRandomPrice(), StockMarket.generateRandomUpdateInterval())
-    )
-    
-    gameState = GameState(
-      money = 10000,
-      companies = companies,
-      holdings = Map(Faction.Player -> selectedNames.map(_ -> 0).toMap),
-      countries = MapGenerator.generateMap(3),
-      bulkAmount = 1
-    )
+    localFaction = client.getAssignedFaction.getOrElse(Faction.Neutral)
+    factionColors = new FactionColors(localFaction)
 
     setupUI()
 
@@ -58,97 +52,139 @@ class GameScreen(game: Tradewar3) extends BaseScreen:
     // Left Panel: Stock Market
     stockMarketUI = new StockMarketUI(skin,
       companyName => {
-        buyStock(companyName)
-        lastAction = () => buyStock(companyName)
+        val action = BuyAction(localFaction, companyName)
+        sendAction(action)
+        lastAction = () => sendAction(action)
       },
       companyName => {
-        sellStock(companyName)
-        lastAction = () => sellStock(companyName)
+        val action = SellAction(localFaction, companyName)
+        sendAction(action)
+        lastAction = () => sendAction(action)
       },
-      () => increaseBulk()
+      () => {
+        val action = UpgradeBulkAction(localFaction)
+        sendAction(action)
+      },
+      factionColors
     )
-    stockMarketUI.init(gameState)
+    if gameState != null then stockMarketUI.init(gameState, localFaction)
 
     // Right Panel: War Map
     warMapUI = new WarMapUI(skin, coords => {
-      placeUnits(coords)
-      lastAction = () => placeUnits(coords)
-    })
-    warMapUI.update(gameState)
+      val action = PlaceUnitsAction(localFaction, coords)
+      sendAction(action)
+      lastAction = () => sendAction(action)
+    }, factionColors)
+    if gameState != null then warMapUI.update(gameState)
 
     rootTable.add(stockMarketUI).expandY().fill().width(Value.percentWidth(0.33f, rootTable))
     rootTable.add(warMapUI).expandY().fill().expandX()
     
-    updateUI()
+    if gameState != null then updateUI()
 
-  private def buyStock(companyName: String): Unit =
+  private def sendAction(action: PlayerAction): Unit =
+    client.send(action)
+
+  private def applyAction(action: PlayerAction): Unit =
+    action match
+      case BuyAction(faction, companyName) =>
+        buyStock(faction, companyName)
+      case SellAction(faction, companyName) =>
+        sellStock(faction, companyName)
+      case PlaceUnitsAction(faction, coords) =>
+        placeUnits(faction, coords)
+      case UpgradeBulkAction(faction) =>
+        increaseBulk(faction)
+
+  private def buyStock(faction: Faction, companyName: String): Unit =
     val company = gameState.companies.find(_.name == companyName).get
-    val maxAffordable = (gameState.money / company.price).toInt
-    val amountToBuy = Math.min(gameState.bulkAmount, maxAffordable)
+    val money = gameState.money.getOrElse(faction, 0L)
+    val maxAffordable = (money / company.price).toInt
+    val bulkAmount = gameState.bulkAmount.getOrElse(faction, 1)
+    val amountToBuy = Math.min(bulkAmount, maxAffordable)
     
     if amountToBuy > 0 then
       val cost = amountToBuy.toLong * company.price
-      val currentHoldings = gameState.holdings(Faction.Player).getOrElse(companyName, 0)
-      val newHoldings = gameState.holdings + (Faction.Player -> (gameState.holdings(Faction.Player) + (companyName -> (currentHoldings + amountToBuy))))
+      val factionHoldings = gameState.holdings.getOrElse(faction, Map.empty)
+      val currentHoldings = factionHoldings.getOrElse(companyName, 0)
+      val newHoldings = gameState.holdings + (faction -> (factionHoldings + (companyName -> (currentHoldings + amountToBuy))))
       gameState = gameState.copy(
-        money = gameState.money - cost,
+        money = gameState.money + (faction -> (money - cost)),
         holdings = newHoldings
       )
-      updateUI()
 
-  private def sellStock(companyName: String): Unit =
+  private def sellStock(faction: Faction, companyName: String): Unit =
     val company = gameState.companies.find(_.name == companyName).get
-    val currentHoldings = gameState.holdings(Faction.Player).getOrElse(companyName, 0)
-    val amountToSell = Math.min(gameState.bulkAmount, currentHoldings)
+    val factionHoldings = gameState.holdings.getOrElse(faction, Map.empty)
+    val currentHoldings = factionHoldings.getOrElse(companyName, 0)
+    val bulkAmount = gameState.bulkAmount.getOrElse(faction, 1)
+    val amountToSell = Math.min(bulkAmount, currentHoldings)
     
     if amountToSell > 0 then
       val gain = amountToSell.toLong * company.price
-      val newHoldings = gameState.holdings + (Faction.Player -> (gameState.holdings(Faction.Player) + (companyName -> (currentHoldings - amountToSell))))
+      val money = gameState.money.getOrElse(faction, 0L)
+      val newHoldings = gameState.holdings + (faction -> (factionHoldings + (companyName -> (currentHoldings - amountToSell))))
       gameState = gameState.copy(
-        money = gameState.money + gain,
+        money = gameState.money + (faction -> (money + gain)),
         holdings = newHoldings
       )
-      updateUI()
 
-  private def placeUnits(coords: HexCoordinate): Unit =
-    val oldMoney = gameState.money
-    gameState = WarMap.placeUnits(gameState, coords, gameState.bulkAmount)
-    if gameState.money != oldMoney then
-        updateUI()
+  private def placeUnits(faction: Faction, coords: HexCoordinate): Unit =
+    val bulkAmount = gameState.bulkAmount.getOrElse(faction, 1)
+    gameState = WarMap.placeUnits(gameState, coords, faction, bulkAmount)
 
-  private def increaseBulk(): Unit =
-    val cost = StockMarket.getBulkUpgradeCost(gameState.bulkAmount)
-    if gameState.money >= cost then
+  private def increaseBulk(faction: Faction): Unit =
+    val bulkAmount = gameState.bulkAmount.getOrElse(faction, 1)
+    val cost = StockMarket.getBulkUpgradeCost(bulkAmount)
+    val money = gameState.money.getOrElse(faction, 0L)
+    if money >= cost then
         gameState = gameState.copy(
-            money = gameState.money - cost,
-            bulkAmount = gameState.bulkAmount + 1
+            money = gameState.money + (faction -> (money - cost)),
+            bulkAmount = gameState.bulkAmount + (faction -> (bulkAmount + 1))
         )
-        updateUI()
 
   private def updateUI(): Unit =
-    stockMarketUI.update(gameState)
+    if stockMarketUI != null then stockMarketUI.update(gameState, localFaction)
     if warMapUI != null then warMapUI.update(gameState)
 
   override def render(delta: Float): Unit =
     clearScreen()
     
-    // Update logic
-    val updatedCompanies = gameState.companies.map(c => StockMarket.updateCompany(c, delta))
-    if updatedCompanies != gameState.companies then
-        gameState = gameState.copy(companies = updatedCompanies)
-        updateUI()
+    client.pollState().foreach { newState =>
+      val isFirstState = gameState == null
+      gameState = newState
+      if isFirstState then stockMarketUI.init(gameState, localFaction)
+      updateUI()
+    }
+    client.getAssignedFaction.foreach { faction =>
+      localFaction = faction
+      if factionColors == null || factionColors.localFaction != localFaction then
+        factionColors = new FactionColors(localFaction)
+    }
 
-    val (updatedGameState, structuralChange) = WarMap.updateBattles(gameState, delta)
-    gameState = updatedGameState
-    if structuralChange then
-        updateUI()
-        checkWinCondition()
+    server.foreach { s =>
+      // Process actions
+      s.getActions.foreach(applyAction)
+      
+      if gameState != null then
+        // Update logic
+        val updatedCompanies = gameState.companies.map(c => StockMarket.updateCompany(c, delta))
+        if updatedCompanies != gameState.companies then
+            gameState = gameState.copy(companies = updatedCompanies)
 
-    if Gdx.input.isKeyJustPressed(Input.Keys.SPACE) && lastAction != null then
-        lastAction()
+        val (updatedGameState, structuralChange) = WarMap.updateBattles(gameState, delta)
+        gameState = updatedGameState
+        
+        // Broadcast state
+        s.broadcast(GameStateUpdate(gameState))
+    }
+    
+    if gameState != null then
+        if Gdx.input.isKeyJustPressed(Input.Keys.SPACE) && lastAction != null then
+            lastAction()
 
-    stage.act(delta)
-    stage.draw()
+        stage.act(delta)
+        stage.draw()
 
   override def resize(width: Int, height: Int): Unit =
     stage.getViewport.update(width, height, true)
@@ -156,12 +192,14 @@ class GameScreen(game: Tradewar3) extends BaseScreen:
   override def dispose(): Unit =
     stage.dispose()
     if skin != null then skin.dispose()
+    server.foreach(_.stop())
+    client.stop()
 
   private def checkWinCondition(): Unit =
     val activeFactions = gameState.countries.map(_.owner).filter(!_.isNeutral).distinct
     if activeFactions.size <= 1 then
-        // Game Over - back to menu or show win message
-        // For now, just back to menu
+        server.foreach(_.stop())
+        client.stop()
         game.setScreen(new MainMenuScreen(game))
 
   private def createGameSkin(): Skin =

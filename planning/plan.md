@@ -1,7 +1,7 @@
 # Development Plan - TradeWar 3: Galaxy
 
 ## Overview
-TradeWar 3: Galaxy is a strategy game where players earn money through a stock market simulation to fund their war machinery. The goal is to dominate a hexagonal map by strategically placing units and defeating three AI opponents. The game features a split-screen interface: the left side handles the stock market, and the right side displays the hexagonal war map.
+TradeWar 3: Galaxy is a strategy game where players earn money through a stock market simulation to fund their war machinery. The goal is to dominate a hexagonal map by strategically placing units and defeating other players. The game features a split-screen interface: the left side handles the stock market, and the right side displays the hexagonal war map.
 
 ## Development Phases
 
@@ -43,13 +43,15 @@ TradeWar 3: Galaxy is a strategy game where players earn money through a stock m
 - **Occupation Logic**: Update country ownership when a faction's units are wiped out.
 - **Win Condition**: Monitor faction status and trigger the end game when only one non-neutral player remains.
 
-### Phase 5: AI Opponents
-- **Stock Market AI**: Implement AI logic to buy low and sell high, interacting with the market through the same constraints as the user.
-- **Strategic AI**: Implement unit placement logic for AI to expand and defend territory.
+### Phase 5: Multiplayer (Networking)
+- **Network Architecture**: Implement a client-server architecture to synchronize game state.
+- **Protocol Definition**: Define messages for synchronization (stock prices, unit placement, battle results).
+- **Lobby System**: Allow players to host or join games via IP address.
+- **Synchronization**: Ensure all players see the same real-time updates for the stock market and war map.
 
 ### Phase 6: Polishing & Balancing
 - Tune the normal distribution parameters for stock price changes.
-- Refine battle mechanics and AI difficulty.
+- Refine battle mechanics and network stability.
 - Add sound effects and UI feedback.
 
 ## Dependencies & Considerations

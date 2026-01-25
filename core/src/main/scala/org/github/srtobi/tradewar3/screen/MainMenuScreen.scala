@@ -1,15 +1,15 @@
 package org.github.srtobi.tradewar3.screen
 
 import com.badlogic.gdx.Gdx
-import com.badlogic.gdx.graphics.{Color, Pixmap, Texture}
-import com.badlogic.gdx.graphics.g2d.BitmapFont
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator.FreeTypeFontParameter
-import com.badlogic.gdx.scenes.scene2d.{Actor, Stage}
-import com.badlogic.gdx.scenes.scene2d.ui.{Label, Skin, Table, TextButton}
+import com.badlogic.gdx.graphics.{Color, Pixmap, Texture}
+import com.badlogic.gdx.scenes.scene2d.ui.*
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener
+import com.badlogic.gdx.scenes.scene2d.{Actor, Stage}
 import com.badlogic.gdx.utils.viewport.ScreenViewport
 import org.github.srtobi.tradewar3.Tradewar3
+import org.github.srtobi.tradewar3.net.*
 import org.github.srtobi.tradewar3.ui.StarfieldBackground
 
 import scala.compiletime.uninitialized
@@ -28,12 +28,28 @@ class MainMenuScreen(game: Tradewar3) extends BaseScreen:
     stage.addActor(table)
     
     val titleLabel = new Label("TradeWar Galaxy", skin, "title")
-    val startButton = new TextButton("Start New Game", skin)
+    
+    val nameField = new TextField("Player", skin)
+    val hostButton = new TextButton("Host Game", skin)
+    
+    val ipField = new TextField("localhost", skin)
+    val joinButton = new TextButton("Join Game", skin)
+    
     val quitButton = new TextButton("Quit", skin)
     
-    startButton.addListener(new ChangeListener {
+    hostButton.addListener(new ChangeListener {
       override def changed(event: ChangeListener.ChangeEvent, actor: Actor): Unit =
-        game.setScreen(new GameScreen(game))
+        val server = new GameServer(12345)
+        val client = new GameClient("localhost", 12345)
+        client.send(JoinRequest(nameField.getText))
+        game.setScreen(new LobbyScreen(game, Some(server), client))
+    })
+    
+    joinButton.addListener(new ChangeListener {
+      override def changed(event: ChangeListener.ChangeEvent, actor: Actor): Unit =
+        val client = new GameClient(ipField.getText, 12345)
+        client.send(JoinRequest(nameField.getText))
+        game.setScreen(new LobbyScreen(game, None, client))
     })
     
     quitButton.addListener(new ChangeListener {
@@ -43,7 +59,17 @@ class MainMenuScreen(game: Tradewar3) extends BaseScreen:
     
     table.add(titleLabel).padBottom(50)
     table.row()
-    table.add(startButton).pad(10).width(300).height(70)
+    table.add(new Label("Player Name:", skin)).pad(5)
+    table.row()
+    table.add(nameField).pad(10).width(300).height(50)
+    table.row()
+    table.add(hostButton).pad(10).width(300).height(70)
+    table.row()
+    table.add(new Label("Join IP:", skin)).pad(5)
+    table.row()
+    table.add(ipField).pad(10).width(300).height(50)
+    table.row()
+    table.add(joinButton).pad(10).width(300).height(70)
     table.row()
     table.add(quitButton).pad(10).width(300).height(70)
 
@@ -101,4 +127,13 @@ class MainMenuScreen(game: Tradewar3) extends BaseScreen:
     textButtonStyle.over = skin.newDrawable("white", Color.GRAY)
     textButtonStyle.font = skin.getFont("default")
     skin.add("default", textButtonStyle)
+
+    val textFieldStyle = new TextField.TextFieldStyle()
+    textFieldStyle.font = font
+    textFieldStyle.fontColor = Color.WHITE
+    textFieldStyle.cursor = skin.newDrawable("white", Color.WHITE)
+    textFieldStyle.selection = skin.newDrawable("white", Color.LIGHT_GRAY)
+    textFieldStyle.background = skin.newDrawable("white", Color.DARK_GRAY)
+    skin.add("default", textFieldStyle)
+
     skin

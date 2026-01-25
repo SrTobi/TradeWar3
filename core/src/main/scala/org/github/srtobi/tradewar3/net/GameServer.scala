@@ -1,0 +1,129 @@
+package org.github.srtobi.tradewar3.net
+
+import com.badlogic.gdx.Gdx
+import com.badlogic.gdx.Net
+import com.badlogic.gdx.graphics.Color
+import com.badlogic.gdx.net.ServerSocketHints
+import com.badlogic.gdx.net.Socket
+import com.badlogic.gdx.net.SocketHints
+import org.github.srtobi.tradewar3.model.*
+
+import java.io.*
+import java.util.concurrent.CopyOnWriteArrayList
+import scala.util.control.NonFatal
+import scala.jdk.CollectionConverters.*
+
+class GameServer(port: Int) {
+  private val serverSocket = {
+    val hints = new ServerSocketHints()
+    hints.acceptTimeout = 0
+    Gdx.net.newServerSocket(Net.Protocol.TCP, port, hints)
+  }
+  private val clients = new CopyOnWriteArrayList[ClientHandler]()
+  private var running = true
+
+  private val thread = new Thread(() => {
+    while (running) {
+      try {
+        val socket = serverSocket.accept(null)
+        val handler = new ClientHandler(socket)
+        clients.add(handler)
+        val t = new Thread(handler)
+        t.setDaemon(true)
+        t.start()
+      } catch {
+        case NonFatal(e) if running => Gdx.app.error("Server", "Error accepting connection", e)
+        case _: Throwable => // Stopped
+      }
+    }
+  }, "GameServer-Acceptor")
+  thread.setDaemon(true)
+  thread.start()
+
+  def broadcast(message: NetworkMessage): Unit = {
+    clients.forEach(_.send(message))
+  }
+
+  def getPlayers: Seq[(String, Faction)] = {
+    clients.asScala.flatMap(c => c.playerName.zip(c.faction)).toSeq
+  }
+
+  def stop(): Unit = {
+    running = false
+    serverSocket.dispose()
+    clients.forEach(_.stop())
+  }
+
+  def getActions: Seq[PlayerAction] = {
+    clients.asScala.flatMap(_.pollActions()).toSeq
+  }
+
+  private class ClientHandler(socket: Socket) extends Runnable {
+    private val out = new ObjectOutputStream(socket.getOutputStream)
+    private val in = new ObjectInputStream(socket.getInputStream)
+    private val actionQueue = new java.util.concurrent.ConcurrentLinkedQueue[PlayerAction]()
+    private var handlerRunning = true
+    var faction: Option[Faction] = None
+    var playerName: Option[String] = None
+
+    def send(message: NetworkMessage): Unit = {
+      try {
+        out.synchronized {
+          out.writeObject(message)
+          out.flush()
+          out.reset() // Critical to avoid memory leak and cached objects
+        }
+      } catch {
+        case NonFatal(e) => 
+            Gdx.app.error("Server", "Error sending message", e)
+            stop()
+      }
+    }
+
+    def pollActions(): Seq[PlayerAction] = {
+      val actions = List.newBuilder[PlayerAction]
+      var a = actionQueue.poll()
+      while (a != null) {
+        actions += a
+        a = actionQueue.poll()
+      }
+      actions.result()
+    }
+
+    override def run(): Unit = {
+      try {
+        while (handlerRunning) {
+          val obj = in.readObject()
+          obj match {
+            case JoinRequest(name) =>
+              val index = clients.indexOf(this)
+              val f = if index >= 0 && index < Faction.AllPlayers.size then 
+                Faction.AllPlayers(index)
+              else 
+                Faction.Neutral
+              faction = Some(f)
+              playerName = Some(name)
+              send(JoinResponse(f))
+              broadcast(LobbyUpdate(getPlayers))
+              Gdx.app.log("Server", s"Player $name joined as $f")
+            case action: PlayerAction =>
+              actionQueue.add(action)
+            case _ => Gdx.app.log("Server", s"Received unknown message: $obj")
+          }
+        }
+      } catch {
+        case _: EOFException => Gdx.app.log("Server", "Client disconnected")
+        case NonFatal(e) if handlerRunning => Gdx.app.error("Server", "Error in ClientHandler", e)
+        case _: Throwable =>
+      } finally {
+        stop()
+      }
+    }
+
+    def stop(): Unit = {
+      handlerRunning = false
+      clients.remove(this)
+      try { socket.dispose() } catch { case _: Throwable => }
+    }
+  }
+}

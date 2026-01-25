@@ -73,10 +73,22 @@ to the player with the remaining units.
 
 The game ends when only one player has countries left (except for the neutral player).
 
-### AI
+### Multiplayer
 
-The 3 opponents are implemented via an AI. They have to interact with the stock market
-exactly like the user. They will see the same prices and can buy and sell stocks.
-(The user is not shown the stocks of the other players).
+Instead of AI, the game is a multiplayer game. The 3 opponents are other human players.
+The game should support local multiplayer (on the same machine).
+Each player has their own turn or they play simultaneously?
+Looking at the design, it seems more like a real-time game where everyone interacts at the same time.
+For a first version of multiplayer, we will implement it such that multiple players can play on the same machine.
+Since the game is real-time, we might need a way to switch between players or have multiple UI areas.
+Actually, for simplicity, let's assume it's a "local network" multiplayer or just multiple players on one machine but we need to define how they interact.
+The user said "transform the game into a multiplayer game".
+Let's define that players can join a game.
+Actually, let's go with a simple approach: Multiplayer via network.
+Wait, let's look at the requirements again. "throw out the ai requirement and add the multiplayer requirement".
 
-It will then also interact with the war map and try to smartly position units.
+Let's refine the Multiplayer section:
+The game supports up to 4 players. One player acts as the host, and others can join via network.
+All players see the same stock market and war map.
+Each player controls their own color (Faction).
+Actions (buying stocks, placing units) are synchronized across all clients.

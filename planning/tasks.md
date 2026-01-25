@@ -31,12 +31,15 @@
 22. [x] Implement country ownership updates upon unit elimination.
 23. [x] Implement win condition monitoring (one non-neutral player remaining).
 
-## Phase 5: AI Opponents
-24. [ ] Implement Stock Market AI (buy low, sell high) following same constraints as player.
-25. [ ] Implement Strategic AI for unit placement (expand and defend).
+## Phase 5: Multiplayer
+24. [x] Implement basic networking (Gdx.net) for synchronizing game state.
+25. [x] Implement host/join logic in the main menu.
+26. [x] Synchronize stock market updates across all clients.
+27. [x] Synchronize unit placement and battle outcomes.
+28. [x] Handle player disconnection and game state recovery.
 
 ## Phase 6: Polishing & Balancing
-26. [ ] Tune normal distribution parameters for stock price volatility.
-27. [ ] Refine battle mechanics and AI difficulty levels.
-28. [ ] Add sound effects for UI and gameplay events.
-29. [ ] Add visual feedback for stock price changes and active battles.
+29. [ ] Tune normal distribution parameters for stock price volatility.
+30. [ ] Refine battle mechanics and ensure network stability.
+31. [ ] Add sound effects for UI and gameplay events.
+32. [ ] Add visual feedback for stock price changes and active battles.
