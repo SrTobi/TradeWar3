@@ -24,17 +24,24 @@ object WarMap:
     
     val country = gameState.countries.find(_.coords == coords).get
     val playerMoney = gameState.money.getOrElse(faction, 0L)
-    val maxAffordable = (playerMoney / UNIT_COST).toInt
-    val amountToPlace = Math.min(amount, maxAffordable)
     
-    if amountToPlace > 0 then
-      val cost = amountToPlace.toLong * UNIT_COST
-      val newUnits = country.units + (faction -> (country.units.getOrElse(faction, 0) + amountToPlace))
+    var totalCost = 0L
+    var count = 0
+    var currentPrice = gameState.unitCost
+    
+    while count < amount && totalCost + currentPrice <= playerMoney do
+      totalCost += currentPrice
+      currentPrice += UNIT_COST_INCREASE
+      count += 1
+    
+    if count > 0 then
+      val newUnits = country.units + (faction -> (country.units.getOrElse(faction, 0) + count))
       
       val newCountry = country.copy(units = newUnits)
       gameState.copy(
-        money = gameState.money + (faction -> (playerMoney - cost)),
-        countries = gameState.countries.map(c => if c.coords == coords then newCountry else c)
+        money = gameState.money + (faction -> (playerMoney - totalCost)),
+        countries = gameState.countries.map(c => if c.coords == coords then newCountry else c),
+        unitCost = currentPrice
       )
     else
       gameState

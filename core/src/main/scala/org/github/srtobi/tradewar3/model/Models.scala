@@ -62,5 +62,6 @@ case class GameState(
     companies: Seq[Company],
     holdings: Map[Faction, Map[String, Int]],
     countries: Seq[Country],
-    bulkAmount: Map[Faction, Int]
+    bulkAmount: Map[Faction, Int],
+    unitCost: Int
 ) extends Serializable

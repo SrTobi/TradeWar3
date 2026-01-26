@@ -16,6 +16,7 @@ class StockMarketUI(skin: Skin,
                     factionColors: FactionColors) extends Table(skin):
   
   private var balanceLabel: Label = uninitialized
+  private var unitCostLabel: Label = uninitialized
   private var companyRows: Seq[CompanyRow] = uninitialized
   private var bulkLabel: Label = uninitialized
   private var increaseBulkButton: TextButton = uninitialized
@@ -39,7 +40,9 @@ class StockMarketUI(skin: Skin,
     row()
     
     balanceLabel = new Label(s"Balance: $money €", skin, "big")
-    add(balanceLabel).pad(10).colspan(5).left()
+    add(balanceLabel).pad(10).colspan(3).left()
+    unitCostLabel = new Label(s"Unit Cost: ${state.unitCost} €", skin)
+    add(unitCostLabel).pad(10).colspan(2).right()
     row()
 
     companyRows = state.companies.map { company =>
@@ -87,6 +90,7 @@ class StockMarketUI(skin: Skin,
     val money = state.money.getOrElse(faction, 0L)
     val bulkAmount = state.bulkAmount.getOrElse(faction, 1)
     balanceLabel.setText(s"Balance: $money €")
+    unitCostLabel.setText(s"Unit Cost: ${state.unitCost} €")
     bulkLabel.setText(s"Bulk Amount: $bulkAmount")
 
     val upgradeCost = StockMarket.getBulkUpgradeCost(bulkAmount)

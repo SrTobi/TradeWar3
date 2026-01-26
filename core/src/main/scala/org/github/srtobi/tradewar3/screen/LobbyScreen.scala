@@ -77,7 +77,8 @@ class LobbyScreen(game: Tradewar3,
       companies = companies,
       holdings = factions.map(f => f -> selectedNames.map(_ -> 0).toMap).toMap,
       countries = MapGenerator.generateMap(MAP_RADIUS, factions),
-      bulkAmount = factions.map(_ -> INITIAL_BULK_AMOUNT).toMap
+      bulkAmount = factions.map(_ -> INITIAL_BULK_AMOUNT).toMap,
+      unitCost = UNIT_COST
     )
     
     server.foreach { s =>

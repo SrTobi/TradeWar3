@@ -16,6 +16,7 @@ object GameConfig:
 
   // War Map / Battle
   val UNIT_COST = 1000
+  val UNIT_COST_INCREASE = 20
   val BATTLE_INTERVAL_MIN = 1.0f
   val BATTLE_INTERVAL_MAX = 7.0f
   val BATTLE_RANDOMNESS_MIN = 0.2f
