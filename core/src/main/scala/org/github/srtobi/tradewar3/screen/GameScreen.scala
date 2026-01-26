@@ -8,6 +8,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.{Label, Skin, Table, TextButton, Value
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener
 import com.badlogic.gdx.scenes.scene2d.{Actor, Stage}
 import com.badlogic.gdx.utils.viewport.ScreenViewport
+import org.github.srtobi.tradewar3.*
 import org.github.srtobi.tradewar3.Tradewar3
 import org.github.srtobi.tradewar3.logic.{MapGenerator, StockMarket, WarMap}
 import org.github.srtobi.tradewar3.model.*
@@ -27,6 +28,7 @@ class GameScreen(game: Tradewar3,
   // UI Components
   private var stockMarketUI: StockMarketUI = uninitialized
   private var warMapUI: WarMapUI = uninitialized
+  private var playerListTable: Table = uninitialized
   private var lastAction: () => Unit = uninitialized
 
   private var localFaction: Faction = client.getAssignedFaction.get
@@ -79,6 +81,11 @@ class GameScreen(game: Tradewar3,
     rootTable.add(stockMarketUI).expandY().fill().width(Value.percentWidth(UI_STOCK_PANEL_WIDTH_PERCENT, rootTable))
     rootTable.add(warMapUI).expandY().fill().expandX()
     
+    playerListTable = new Table()
+    playerListTable.setFillParent(true)
+    playerListTable.top().right()
+    stage.addActor(playerListTable)
+
     if gameState != null then updateUI()
 
   private def sendAction(action: PlayerAction): Unit =
@@ -145,6 +152,31 @@ class GameScreen(game: Tradewar3,
   private def updateUI(): Unit =
     if stockMarketUI != null then stockMarketUI.update(gameState, localFaction)
     if warMapUI != null then warMapUI.update(gameState)
+    updatePlayerList()
+
+  private def updatePlayerList(): Unit =
+    if playerListTable == null || gameState == null then return
+    playerListTable.clearChildren()
+    val players = client.getFactions
+    players.foreach { faction =>
+      val factionColor = factionColors(faction)
+      val fontColor =
+        if factionColor.distanceSquared(Color.BLACK) < factionColor.distanceSquared(Color.WHITE) then
+          Color.WHITE
+        else
+          Color.BLACK
+      
+      val style = new Label.LabelStyle(skin.get(classOf[Label.LabelStyle]))
+      style.fontColor = fontColor
+      val label = new Label(faction.name, style)
+
+      val container = new Table()
+      container.setBackground(skin.newDrawable("white", factionColor))
+      container.add(label).pad(5, 15, 5, 15)
+      
+      playerListTable.add(container).pad(5).right()
+      playerListTable.row()
+    }
 
   override def render(delta: Float): Unit =
     clearScreen()

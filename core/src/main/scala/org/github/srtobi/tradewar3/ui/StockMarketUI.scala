@@ -34,10 +34,6 @@ class StockMarketUI(skin: Skin,
   def init(state: GameState, faction: Faction): Unit =
     clearChildren()
     val money = state.money.getOrElse(faction, 0L)
-    val factionLabel = new Label(s"Faction: ${faction.toString}", skin)
-    factionLabel.setColor(factionColors(faction))
-    add(factionLabel).pad(10).colspan(5).left()
-    row()
     
     balanceLabel = new Label(s"Balance: $money €", skin, "big")
     add(balanceLabel).pad(10).colspan(3).left()
