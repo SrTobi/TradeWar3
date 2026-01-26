@@ -24,4 +24,4 @@ object StockMarket:
     STOCK_MIN_UPDATE_INTERVAL + Random.nextFloat() * (STOCK_MAX_UPDATE_INTERVAL - STOCK_MIN_UPDATE_INTERVAL)
 
   def getBulkUpgradeCost(currentBulk: Int): Long =
-    STOCK_BULK_UPGRADE_BASE_COST * Math.pow(2, currentBulk - 1).toLong
+    STOCK_BULK_UPGRADE_BASE_COST * Math.pow(3, currentBulk - 1).toLong

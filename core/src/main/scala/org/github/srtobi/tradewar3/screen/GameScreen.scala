@@ -136,8 +136,7 @@ class GameScreen(game: Tradewar3,
       )
 
   private def placeUnits(faction: Faction, coords: HexCoordinate): Unit =
-    val bulkAmount = gameState.bulkAmount.getOrElse(faction, 1)
-    gameState = WarMap.placeUnits(gameState, coords, faction, bulkAmount)
+    gameState = WarMap.placeUnits(gameState, coords, faction, 1)
 
   private def increaseBulk(faction: Faction): Unit =
     val bulkAmount = gameState.bulkAmount.getOrElse(faction, 1)
