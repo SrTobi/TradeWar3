@@ -7,13 +7,13 @@ import com.badlogic.gdx.scenes.scene2d.Actor
 import com.badlogic.gdx.graphics.g2d.{Batch, GlyphLayout}
 import org.github.srtobi.tradewar3.model.{FactionColors, GameState, HexCoordinate}
 import org.github.srtobi.tradewar3.distanceSquared
+import org.github.srtobi.tradewar3.GameConfig.*
 
 import scala.compiletime.uninitialized
 
 class WarMapUI(skin: Skin, onHexClick: HexCoordinate => Unit, factionColors: FactionColors) extends Actor:
   private val shapeRenderer = new ShapeRenderer()
   private var gameState: GameState = uninitialized
-  private val hexSize = 80f
   private val layout = new GlyphLayout()
 
   locally {
@@ -47,7 +47,7 @@ class WarMapUI(skin: Skin, onHexClick: HexCoordinate => Unit, factionColors: Fac
     shapeRenderer.begin(ShapeRenderer.ShapeType.Filled)
     gameState.countries.foreach { country =>
       val (px, py) = hexToPixel(country.coords)
-      drawHexagon(centerX + px, centerY + py, hexSize, factionColors(country.owner))
+      drawHexagon(centerX + px, centerY + py, UI_HEX_SIZE, factionColors(country.owner))
     }
     shapeRenderer.end()
 
@@ -56,7 +56,7 @@ class WarMapUI(skin: Skin, onHexClick: HexCoordinate => Unit, factionColors: Fac
     shapeRenderer.setColor(Color.BLACK)
     gameState.countries.foreach { country =>
       val (px, py) = hexToPixel(country.coords)
-      drawHexagonOutline(centerX + px, centerY + py, hexSize)
+      drawHexagonOutline(centerX + px, centerY + py, UI_HEX_SIZE)
     }
     shapeRenderer.end()
 
@@ -112,13 +112,13 @@ class WarMapUI(skin: Skin, onHexClick: HexCoordinate => Unit, factionColors: Fac
 
   private def hexToPixel(coords: HexCoordinate): (Float, Float) =
     // Pointy topped
-    val x = hexSize * (math.sqrt(3).toFloat * coords.q + math.sqrt(3).toFloat / 2f * coords.r)
-    val y = hexSize * (3f / 2f * coords.r)
+    val x = UI_HEX_SIZE * (math.sqrt(3).toFloat * coords.q + math.sqrt(3).toFloat / 2f * coords.r)
+    val y = UI_HEX_SIZE * (3f / 2f * coords.r)
     (x, y)
 
   private def pixelToHex(x: Float, y: Float): HexCoordinate =
-    val q = (math.sqrt(3).toFloat / 3f * x - 1f / 3f * y) / hexSize
-    val r = (2f / 3f * y) / hexSize
+    val q = (math.sqrt(3).toFloat / 3f * x - 1f / 3f * y) / UI_HEX_SIZE
+    val r = (2f / 3f * y) / UI_HEX_SIZE
     roundHex(q, r)
 
   private def roundHex(q: Float, r: Float): HexCoordinate =

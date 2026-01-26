@@ -13,6 +13,7 @@ import org.github.srtobi.tradewar3.logic.{MapGenerator, StockMarket, WarMap}
 import org.github.srtobi.tradewar3.model.*
 import org.github.srtobi.tradewar3.ui.{StockMarketUI, WarMapUI}
 import org.github.srtobi.tradewar3.net.*
+import org.github.srtobi.tradewar3.GameConfig.*
 
 import scala.compiletime.uninitialized
 
@@ -75,7 +76,7 @@ class GameScreen(game: Tradewar3,
     }, factionColors)
     if gameState != null then warMapUI.update(gameState)
 
-    rootTable.add(stockMarketUI).expandY().fill().width(Value.percentWidth(0.33f, rootTable))
+    rootTable.add(stockMarketUI).expandY().fill().width(Value.percentWidth(UI_STOCK_PANEL_WIDTH_PERCENT, rootTable))
     rootTable.add(warMapUI).expandY().fill().expandX()
     
     if gameState != null then updateUI()

@@ -1,6 +1,7 @@
 package org.github.srtobi.tradewar3.logic
 
 import org.github.srtobi.tradewar3.model.*
+import org.github.srtobi.tradewar3.GameConfig.*
 import scala.util.Random
 
 object MapGenerator:
@@ -32,10 +33,10 @@ object MapGenerator:
     else Map.empty[HexCoordinate, Faction]
 
     allCoords.map { coords =>
-      val nextBattle = Random.nextFloat() * 6f + 1f
+      val nextBattle = BATTLE_INTERVAL_MIN + Random.nextFloat() * (BATTLE_INTERVAL_MAX - BATTLE_INTERVAL_MIN)
       factionStarts.get(coords) match
         case Some(faction) =>
-          Country(coords, units = Map(faction -> 10), nextBattleUpdate = nextBattle)
+          Country(coords, units = Map(faction -> INITIAL_UNITS), nextBattleUpdate = nextBattle)
         case None =>
-          Country(coords, units = Map(Faction.Neutral -> (Random.nextInt(16) + 5)), nextBattleUpdate = nextBattle)
+          Country(coords, units = Map(Faction.Neutral -> (Random.nextInt(NEUTRAL_UNITS_MAX - NEUTRAL_UNITS_MIN + 1) + NEUTRAL_UNITS_MIN)), nextBattleUpdate = nextBattle)
     }

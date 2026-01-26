@@ -11,6 +11,7 @@ import com.badlogic.gdx.utils.viewport.ScreenViewport
 import org.github.srtobi.tradewar3.Tradewar3
 import org.github.srtobi.tradewar3.net.*
 import org.github.srtobi.tradewar3.ui.StarfieldBackground
+import org.github.srtobi.tradewar3.GameConfig.*
 
 import scala.compiletime.uninitialized
 
@@ -39,15 +40,15 @@ class MainMenuScreen(game: Tradewar3) extends BaseScreen:
     
     hostButton.addListener(new ChangeListener {
       override def changed(event: ChangeListener.ChangeEvent, actor: Actor): Unit =
-        val server = new GameServer(12345)
-        val client = new GameClient("localhost", 12345)
+        val server = new GameServer(DEFAULT_PORT)
+        val client = new GameClient("localhost", DEFAULT_PORT)
         client.send(JoinRequest(nameField.getText))
         game.setScreen(new LobbyScreen(game, Some(server), client))
     })
     
     joinButton.addListener(new ChangeListener {
       override def changed(event: ChangeListener.ChangeEvent, actor: Actor): Unit =
-        val client = new GameClient(ipField.getText, 12345)
+        val client = new GameClient(ipField.getText, DEFAULT_PORT)
         client.send(JoinRequest(nameField.getText))
         game.setScreen(new LobbyScreen(game, None, client))
     })

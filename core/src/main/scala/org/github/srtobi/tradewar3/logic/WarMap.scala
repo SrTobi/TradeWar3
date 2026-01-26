@@ -1,10 +1,9 @@
 package org.github.srtobi.tradewar3.logic
 
 import org.github.srtobi.tradewar3.model.*
+import org.github.srtobi.tradewar3.GameConfig.*
 
 object WarMap:
-  val UnitCost = 100
-
   def canPlaceUnits(gameState: GameState, coords: HexCoordinate, faction: Faction): Boolean =
     gameState.countries.find(_.coords == coords) match
       case Some(country) =>
@@ -13,7 +12,7 @@ object WarMap:
           gameState.countries.find(_.coords == nbCoords).exists { neighbor =>
             val myUnits = neighbor.units.getOrElse(faction, 0)
             val otherUnits = neighbor.units.filter(_._1 != faction).values.sum
-            myUnits > 2 * otherUnits
+            myUnits > WAR_EXPANSION_THRESHOLD * otherUnits
           }
         }
         
@@ -25,11 +24,11 @@ object WarMap:
     
     val country = gameState.countries.find(_.coords == coords).get
     val playerMoney = gameState.money.getOrElse(faction, 0L)
-    val maxAffordable = (playerMoney / UnitCost).toInt
+    val maxAffordable = (playerMoney / UNIT_COST).toInt
     val amountToPlace = Math.min(amount, maxAffordable)
     
     if amountToPlace > 0 then
-      val cost = amountToPlace.toLong * UnitCost
+      val cost = amountToPlace.toLong * UNIT_COST
       val newUnits = country.units + (faction -> (country.units.getOrElse(faction, 0) + amountToPlace))
       
       val newCountry = country.copy(units = newUnits)
@@ -45,7 +44,7 @@ object WarMap:
     val newCountries = gameState.countries.map { country =>
       val newNextUpdate = country.nextBattleUpdate - delta
       if newNextUpdate <= 0 then
-        val nextInterval = scala.util.Random.nextFloat() * 6f + 1f
+        val nextInterval = BATTLE_INTERVAL_MIN + scala.util.Random.nextFloat() * (BATTLE_INTERVAL_MAX - BATTLE_INTERVAL_MIN)
         val processedCountry = processBattle(gameState, country)
         if processedCountry.units != country.units then
           structuralChange = true
@@ -64,9 +63,9 @@ object WarMap:
       val otherUnits = totalUnits - count
       
       // Each enemy unit has a chance to kill one of our units.
-      // We use a base efficiency (e.g., 0.1) and add randomness.
+      // We use a base efficiency and add randomness.
       // Expected losses: otherUnits * efficiency
-      val randomness = scala.util.Random.nextFloat() * 0.15f + 0.2f
+      val randomness = BATTLE_RANDOMNESS_MIN + scala.util.Random.nextFloat() * (BATTLE_RANDOMNESS_MAX - BATTLE_RANDOMNESS_MIN)
       
       val losses = Math.round(otherUnits * randomness).toInt
       val newCount = Math.max(0, count - losses)

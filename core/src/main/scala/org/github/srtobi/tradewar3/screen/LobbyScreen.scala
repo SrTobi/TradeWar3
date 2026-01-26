@@ -13,6 +13,7 @@ import org.github.srtobi.tradewar3.net.*
 import org.github.srtobi.tradewar3.ui.StarfieldBackground
 import org.github.srtobi.tradewar3.model.*
 import org.github.srtobi.tradewar3.logic.*
+import org.github.srtobi.tradewar3.GameConfig.*
 
 import scala.compiletime.uninitialized
 
@@ -66,17 +67,17 @@ class LobbyScreen(game: Tradewar3,
     val factions = client.getFactions
 
     // Initialize Game State
-    val selectedNames = scala.util.Random.shuffle(companyNames).take(5)
+    val selectedNames = scala.util.Random.shuffle(companyNames).take(STOCK_COMPANY_COUNT)
     val companies = selectedNames.map(name => 
       Company(name, StockMarket.generateRandomPrice(), StockMarket.generateRandomUpdateInterval())
     )
     
     val initialGameState = GameState(
-      money = factions.map(_ -> 10000L).toMap,
+      money = factions.map(_ -> INITIAL_MONEY).toMap,
       companies = companies,
       holdings = factions.map(f => f -> selectedNames.map(_ -> 0).toMap).toMap,
-      countries = MapGenerator.generateMap(3, factions),
-      bulkAmount = factions.map(_ -> 1).toMap
+      countries = MapGenerator.generateMap(MAP_RADIUS, factions),
+      bulkAmount = factions.map(_ -> INITIAL_BULK_AMOUNT).toMap
     )
     
     server.foreach { s =>

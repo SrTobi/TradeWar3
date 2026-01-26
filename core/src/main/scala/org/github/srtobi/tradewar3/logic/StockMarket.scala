@@ -1,32 +1,27 @@
 package org.github.srtobi.tradewar3.logic
 
 import org.github.srtobi.tradewar3.model.Company
+import org.github.srtobi.tradewar3.GameConfig.*
 import scala.util.Random
 
 object StockMarket:
-  val MinPrice = 100
-  val MaxPrice = 4000
-  val MinUpdateInterval = 0.5f
-  val MaxUpdateInterval = 2.5f
-  val Sigma = 400.0 // Standard deviation for price changes
-
   def updateCompany(company: Company, delta: Float): Company =
     val newNextUpdate = company.nextUpdate - delta
     if newNextUpdate <= 0 then
-      val change = (Random.nextGaussian() * Sigma).toInt
+      val change = (Random.nextGaussian() * STOCK_PRICE_SIGMA).toInt
       // Simple mean reversion to keep it within bounds and satisfy "less likely at extremes"
-      val meanReversion = (2000 - company.price) * 0.05
-      val newPrice = Math.max(MinPrice, Math.min(MaxPrice, (company.price + change + meanReversion).toInt))
-      val nextInterval = MinUpdateInterval + Random.nextFloat() * (MaxUpdateInterval - MinUpdateInterval)
+      val meanReversion = (STOCK_MEAN_REVERSION_TARGET - company.price) * STOCK_MEAN_REVERSION_FACTOR
+      val newPrice = Math.max(STOCK_MIN_PRICE, Math.min(STOCK_MAX_PRICE, (company.price + change + meanReversion).toInt))
+      val nextInterval = STOCK_MIN_UPDATE_INTERVAL + Random.nextFloat() * (STOCK_MAX_UPDATE_INTERVAL - STOCK_MIN_UPDATE_INTERVAL)
       company.copy(price = newPrice, nextUpdate = nextInterval)
     else
       company.copy(nextUpdate = newNextUpdate)
 
   def generateRandomPrice(): Int =
-    Random.nextInt(MaxPrice - MinPrice) + MinPrice
+    Random.nextInt(STOCK_MAX_PRICE - STOCK_MIN_PRICE) + STOCK_MIN_PRICE
 
   def generateRandomUpdateInterval(): Float =
-    MinUpdateInterval + Random.nextFloat() * (MaxUpdateInterval - MinUpdateInterval)
+    STOCK_MIN_UPDATE_INTERVAL + Random.nextFloat() * (STOCK_MAX_UPDATE_INTERVAL - STOCK_MIN_UPDATE_INTERVAL)
 
   def getBulkUpgradeCost(currentBulk: Int): Long =
-    5000L * Math.pow(2, currentBulk - 1).toLong
+    STOCK_BULK_UPGRADE_BASE_COST * Math.pow(2, currentBulk - 1).toLong
