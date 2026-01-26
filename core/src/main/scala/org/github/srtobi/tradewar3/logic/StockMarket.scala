@@ -4,10 +4,10 @@ import org.github.srtobi.tradewar3.model.Company
 import scala.util.Random
 
 object StockMarket:
-  val MinPrice = 1
+  val MinPrice = 100
   val MaxPrice = 4000
   val MinUpdateInterval = 0.5f
-  val MaxUpdateInterval = 4.0f
+  val MaxUpdateInterval = 2.5f
   val Sigma = 400.0 // Standard deviation for price changes
 
   def updateCompany(company: Company, delta: Float): Company =
@@ -23,7 +23,7 @@ object StockMarket:
       company.copy(nextUpdate = newNextUpdate)
 
   def generateRandomPrice(): Int =
-    Random.nextInt(MaxPrice - MinPrice + 1) + MinPrice
+    Random.nextInt(MaxPrice - MinPrice) + MinPrice
 
   def generateRandomUpdateInterval(): Float =
     MinUpdateInterval + Random.nextFloat() * (MaxUpdateInterval - MinUpdateInterval)

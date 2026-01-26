@@ -165,11 +165,12 @@ class GameScreen(game: Tradewar3,
         if updatedCompanies != gameState.companies then
             gameState = gameState.copy(companies = updatedCompanies)
 
-        val (updatedGameState, structuralChange) = WarMap.updateBattles(gameState, delta)
-        gameState = updatedGameState
-        
-        // Broadcast state
-        s.broadcast(GameStateUpdate(gameState))
+        val (updatedGameState, _) = WarMap.updateBattles(gameState, delta)
+        if updatedGameState != gameState then
+          gameState = updatedGameState
+
+          // Broadcast state
+          s.broadcast(GameStateUpdate(gameState))
     }
     
     if gameState != null then
