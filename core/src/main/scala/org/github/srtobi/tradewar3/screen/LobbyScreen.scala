@@ -86,17 +86,20 @@ class LobbyScreen(game: Tradewar3,
       Company(name, StockMarket.generateRandomPrice(), StockMarket.generateRandomUpdateInterval())
     )
 
+    val countries = MapGenerator.generateMap(MAP_RADIUS, factions)
     val initialGameState = GameState(
       money = Map.empty,  // Client-only, not synced
       companies = companies,
       holdings = Map.empty,  // Client-only, not synced
-      countries = MapGenerator.generateMap(MAP_RADIUS, factions),
+      countries = countries,
       bulkAmount = Map.empty,  // Client-only, not synced
-      unitCost = UNIT_COST
+      unitCost = UNIT_COST  // Will be recalculated
     )
+    // Calculate initial unit cost based on starting units
+    val gameStateWithCost = initialGameState.copy(unitCost = WarMap.calculateUnitCost(initialGameState))
 
     server.foreach { s =>
-      s.broadcast(GameStateUpdate(initialGameState))
+      s.broadcast(GameStateUpdate(gameStateWithCost))
       s.broadcast(StartGame)
     }
 

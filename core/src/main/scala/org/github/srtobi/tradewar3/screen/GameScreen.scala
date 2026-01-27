@@ -94,7 +94,7 @@ class GameScreen(game: Tradewar3,
     warMapUI = new WarMapUI(skin, coords => {
       if tryPlaceUnit(coords) then
         lastAction = () => tryPlaceUnit(coords)
-    }, factionColors)
+    }, factionColors, localFaction)
     if gameState != null then warMapUI.update(gameState)
 
     rootTable.add(stockMarketUI).expandY().fill().width(Value.percentWidth(UI_STOCK_PANEL_WIDTH_PERCENT, rootTable))

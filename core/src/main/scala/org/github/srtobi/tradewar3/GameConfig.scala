@@ -21,6 +21,7 @@ object GameConfig:
   val BATTLE_INTERVAL_MAX = 7.0f
   val BATTLE_RANDOMNESS_MIN = 0.2f
   val BATTLE_RANDOMNESS_MAX = 0.35f
+  val TERRITORIAL_ADVANTAGE_PER_NEIGHBOR = 0.02f  // 2% less losses per controlled neighbor
   val INITIAL_UNITS = 10
   val NEUTRAL_UNITS_MIN = 5
   val NEUTRAL_UNITS_MAX = 20

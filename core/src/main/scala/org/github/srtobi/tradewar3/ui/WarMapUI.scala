@@ -14,7 +14,7 @@ import scala.collection.mutable.ArrayBuffer
 import scala.compiletime.uninitialized
 import scala.util.Random
 
-class WarMapUI(skin: Skin, onHexClick: HexCoordinate => Unit, factionColors: FactionColors) extends Actor:
+class WarMapUI(skin: Skin, onHexClick: HexCoordinate => Unit, factionColors: FactionColors, localFaction: Faction) extends Actor:
   private val shapeRenderer = new ShapeRenderer()
   private var gameState: GameState = uninitialized
   private var prevGameState: GameState = uninitialized
@@ -125,6 +125,45 @@ class WarMapUI(skin: Skin, onHexClick: HexCoordinate => Unit, factionColors: Fac
 
     val centerX = getX + getWidth / 2
     val centerY = getY + getHeight / 2
+
+    // Draw connection bridges between territories of the same faction
+    shapeRenderer.begin(ShapeRenderer.ShapeType.Filled)
+    val drawnConnections = scala.collection.mutable.Set[(HexCoordinate, HexCoordinate)]()
+    gameState.countries.foreach { country =>
+      if !country.owner.isNeutral then
+        val (px1, py1) = hexToPixel(country.coords)
+        country.coords.neighbors.foreach { neighborCoords =>
+          // Avoid drawing the same connection twice
+          val connectionKey = if country.coords.hashCode < neighborCoords.hashCode
+            then (country.coords, neighborCoords)
+            else (neighborCoords, country.coords)
+
+          if !drawnConnections.contains(connectionKey) then
+            gameState.countries.find(_.coords == neighborCoords).foreach { neighbor =>
+              if neighbor.owner == country.owner then
+                drawnConnections += connectionKey
+                val (px2, py2) = hexToPixel(neighborCoords)
+                val color = factionColors(country.owner)
+
+                // Draw glowing bridge
+                val bridgePulse = (math.sin(pulseTime * 1.5f).toFloat + 1f) / 2f * 0.3f + 0.4f
+                shapeRenderer.setColor(color.r, color.g, color.b, bridgePulse * 0.6f)
+                shapeRenderer.rectLine(
+                  centerX + px1, centerY + py1,
+                  centerX + px2, centerY + py2,
+                  8f
+                )
+                // Brighter center line
+                shapeRenderer.setColor(color.r * 1.2f min 1f, color.g * 1.2f min 1f, color.b * 1.2f min 1f, bridgePulse)
+                shapeRenderer.rectLine(
+                  centerX + px1, centerY + py1,
+                  centerX + px2, centerY + py2,
+                  3f
+                )
+            }
+        }
+    }
+    shapeRenderer.end()
 
     // Draw hex glow effects (under hexagons)
     shapeRenderer.begin(ShapeRenderer.ShapeType.Filled)
@@ -260,6 +299,34 @@ class WarMapUI(skin: Skin, onHexClick: HexCoordinate => Unit, factionColors: Fac
       case (text, fontColor, _, tx, ty) =>
         font.setColor(fontColor)
         font.draw(batch, text, tx, ty)
+    }
+
+    // Draw territorial bonus indicators for local player
+    gameState.countries.foreach { country =>
+      val localUnits = country.units.getOrElse(localFaction, 0)
+      val isContested = country.units.filter(_._2 > 0).size > 1
+
+      // Show bonus on hexes where local player has units
+      if localUnits > 0 then
+        val controlledNeighbors = country.coords.neighbors.count { neighborCoords =>
+          gameState.countries.find(_.coords == neighborCoords).exists(_.owner == localFaction)
+        }
+
+        if controlledNeighbors > 0 then
+          val bonusPercent = (controlledNeighbors * TERRITORIAL_ADVANTAGE_PER_NEIGHBOR * 100).toInt
+          val bonusText = s"+$bonusPercent%"
+          val (px, py) = hexToPixel(country.coords)
+
+          layout.setText(font, bonusText)
+          val bx = centerX + px - layout.width / 2
+          val by = centerY + py - UI_HEX_SIZE * 0.55f
+
+          // Draw with green color for bonus
+          if isContested then
+            font.setColor(0.3f, 1f, 0.5f, 1f) // Bright green for contested
+          else
+            font.setColor(0.5f, 0.9f, 0.6f, 0.7f) // Softer green for non-contested
+          font.draw(batch, bonusText, bx, by)
     }
 
     // Reset font colors
