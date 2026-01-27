@@ -47,6 +47,11 @@ class GameScreen(game: Tradewar3,
   private var musicUpdateTimer: Float = 0f
   private val musicUpdateInterval: Float = 2.0f
 
+  // Network broadcast throttling
+  private var broadcastTimer: Float = 0f
+  private val broadcastInterval: Float = 0.05f  // Max 20 broadcasts per second
+  private var needsBroadcast: Boolean = true
+
   // Creates a view of the game state with local money/holdings/bulk for UI
   private def localViewState: GameState =
     if gameState == null then return null
@@ -221,19 +226,27 @@ class GameScreen(game: Tradewar3,
     server.foreach { s =>
       if gameState != null then
         // Update battles BEFORE processing actions, so newly placed units survive at least one frame
-        val (updatedGameState, _) = WarMap.updateBattles(gameState, delta)
+        val (updatedGameState, structuralChange) = WarMap.updateBattles(gameState, delta)
         gameState = updatedGameState
+        if structuralChange then needsBroadcast = true
 
         // Update stock prices
         val updatedCompanies = gameState.companies.map(c => StockMarket.updateCompany(c, delta))
         if updatedCompanies != gameState.companies then
             gameState = gameState.copy(companies = updatedCompanies)
+            needsBroadcast = true
 
       // Process actions after battles
-      s.getActions.foreach(applyAction)
+      val actions = s.getActions
+      if actions.nonEmpty then
+        actions.foreach(applyAction)
+        needsBroadcast = true
 
-      if gameState != null then
-        // Broadcast state to all clients
+      // Throttle broadcasts to avoid overwhelming the network
+      broadcastTimer += delta
+      if gameState != null && needsBroadcast && broadcastTimer >= broadcastInterval then
+        broadcastTimer = 0f
+        needsBroadcast = false
         s.broadcast(GameStateUpdate(networkState))
     }
 

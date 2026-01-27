@@ -61,17 +61,33 @@ class GameServer(port: Int) {
     private var handlerRunning = true
     var faction: Option[Faction] = None
 
-    def send(message: NetworkMessage): Unit = {
-      try {
-        out.synchronized {
-          out.writeObject(message)
-          out.flush()
-          out.reset() // Critical to avoid memory leak and cached objects
-        }
-      } catch {
-        case NonFatal(e) => 
+    private val sendQueue = new java.util.concurrent.LinkedBlockingQueue[NetworkMessage]()
+    private val senderThread = new Thread(() => {
+      while (handlerRunning) {
+        try {
+          val message = sendQueue.poll(100, java.util.concurrent.TimeUnit.MILLISECONDS)
+          if (message != null) {
+            out.synchronized {
+              out.writeObject(message)
+              out.flush()
+              out.reset()
+            }
+          }
+        } catch {
+          case _: InterruptedException => // Normal during shutdown
+          case NonFatal(e) if handlerRunning =>
             Gdx.app.error("Server", "Error sending message", e)
             stop()
+          case _: Throwable =>
+        }
+      }
+    }, "ClientHandler-Sender")
+    senderThread.setDaemon(true)
+    senderThread.start()
+
+    def send(message: NetworkMessage): Unit = {
+      if (handlerRunning) {
+        sendQueue.offer(message)
       }
     }
 
@@ -115,6 +131,7 @@ class GameServer(port: Int) {
     def stop(): Unit = {
       handlerRunning = false
       clients.remove(this)
+      senderThread.interrupt()
       try { socket.dispose() } catch { case _: Throwable => }
     }
   }
