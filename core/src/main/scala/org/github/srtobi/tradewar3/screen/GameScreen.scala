@@ -43,6 +43,9 @@ class GameScreen(game: Tradewar3,
   private var localHoldings: Map[String, Int] = Map.empty
   private var localBulkAmount: Int = INITIAL_BULK_AMOUNT
 
+  // Track last broadcasted state to avoid redundant broadcasts
+  private var lastBroadcastedNetworkState: GameState = _
+
   // Creates a view of the game state with local money/holdings/bulk for UI
   private def localViewState: GameState =
     if gameState == null then return null
@@ -52,12 +55,13 @@ class GameScreen(game: Tradewar3,
       bulkAmount = Map(localFaction -> localBulkAmount)
     )
 
-  // Creates a stripped state for network broadcast (no money/holdings/bulk)
+  // Creates a stripped state for network broadcast (no money/holdings/bulk/battle timers)
   private def networkState: GameState =
     gameState.copy(
       money = Map.empty,
       holdings = Map.empty,
-      bulkAmount = Map.empty
+      bulkAmount = Map.empty,
+      countries = gameState.countries.map(c => c.copy(nextBattleUpdate = 0f))
     )
 
   private val companyNames = Seq(
@@ -212,11 +216,13 @@ class GameScreen(game: Tradewar3,
             gameState = gameState.copy(companies = updatedCompanies)
 
         val (updatedGameState, _) = WarMap.updateBattles(gameState, delta)
-        if updatedGameState != gameState then
-          gameState = updatedGameState
+        gameState = updatedGameState
 
-          // Broadcast state (without money/holdings/bulk - those are client-only)
-          s.broadcast(GameStateUpdate(networkState))
+        // Only broadcast if network-relevant state changed
+        val currentNetworkState = networkState
+        if currentNetworkState != lastBroadcastedNetworkState then
+          lastBroadcastedNetworkState = currentNetworkState
+          s.broadcast(GameStateUpdate(currentNetworkState))
     }
 
     if gameState != null then
