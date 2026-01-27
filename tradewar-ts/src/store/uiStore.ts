@@ -27,6 +27,24 @@ interface UIStore {
 
 let particleId = 0;
 
+// Load commander name from localStorage
+function loadPlayerName(): string {
+  try {
+    return localStorage.getItem('tradewar-commander-name') || '';
+  } catch {
+    return '';
+  }
+}
+
+// Save commander name to localStorage
+function savePlayerName(name: string): void {
+  try {
+    localStorage.setItem('tradewar-commander-name', name);
+  } catch {
+    // Ignore localStorage errors
+  }
+}
+
 export const useUIStore = create<UIStore>((set) => ({
   screen: 'menu',
   setScreen: (screen) => set({ screen }),
@@ -47,8 +65,11 @@ export const useUIStore = create<UIStore>((set) => ({
     }, 1000);
   },
 
-  playerName: '',
-  setPlayerName: (name) => set({ playerName: name }),
+  playerName: loadPlayerName(),
+  setPlayerName: (name) => {
+    savePlayerName(name);
+    set({ playerName: name });
+  },
 
   serverAddress: 'localhost',
   setServerAddress: (address) => set({ serverAddress: address }),

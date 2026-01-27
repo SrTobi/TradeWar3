@@ -7,6 +7,7 @@ import { gameClient } from '@/network/client';
 import { GAME } from '@/game/constants';
 import { Starfield } from '@/components/three/Starfield';
 import type { GameInfo } from '@/network/messages';
+import { playClick, resumeAudio } from '@/audio/sounds';
 
 const containerStyle: React.CSSProperties = {
   position: 'relative',
@@ -274,6 +275,8 @@ export function MainMenu() {
   }, [playerName, connected]);
 
   const handleHost = () => {
+    resumeAudio();
+    playClick();
     if (!playerName.trim()) {
       setError('Please enter your commander name');
       return;
@@ -283,6 +286,8 @@ export function MainMenu() {
   };
 
   const handleJoin = (gameId: string) => {
+    resumeAudio();
+    playClick();
     if (!playerName.trim()) {
       setError('Please enter your commander name');
       return;

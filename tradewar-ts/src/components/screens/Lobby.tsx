@@ -5,6 +5,7 @@ import { useUIStore } from '@/store/uiStore';
 import { gameClient } from '@/network/client';
 import { getFactionColor } from '@/types/game';
 import { Starfield } from '@/components/three/Starfield';
+import { playClick, playGameStart } from '@/audio/sounds';
 
 const containerStyle: React.CSSProperties = {
   position: 'relative',
@@ -111,10 +112,12 @@ export function Lobby() {
   const setScreen = useUIStore((s) => s.setScreen);
 
   const handleStartGame = () => {
+    playGameStart();
     gameClient.send({ type: 'startGame' });
   };
 
   const handleLeave = () => {
+    playClick();
     gameClient.send({ type: 'leaveGame' });
     setScreen('menu');
   };

@@ -1,7 +1,9 @@
+import { useEffect, useRef } from 'react';
 import { useGameStore } from '@/store/gameStore';
 import { useUIStore } from '@/store/uiStore';
 import { StockPanel } from './StockPanel';
 import { PlayerList } from './PlayerList';
+import { playVictory, playDefeat, playClick } from '@/audio/sounds';
 
 const overlayStyle: React.CSSProperties = {
   position: 'absolute',
@@ -34,13 +36,27 @@ export function GameOverlay() {
   const localFactionId = useGameStore((s) => s.local.factionId);
   const setScreen = useUIStore((s) => s.setScreen);
   const reset = useGameStore((s) => s.reset);
+  const prevPhaseRef = useRef<string | null>(null);
+
+  const isWinner = gameState?.winner?.id === localFactionId;
+
+  // Play victory/defeat sound when game ends
+  useEffect(() => {
+    if (gameState?.phase === 'ended' && prevPhaseRef.current !== 'ended') {
+      if (isWinner) {
+        playVictory();
+      } else {
+        playDefeat();
+      }
+    }
+    prevPhaseRef.current = gameState?.phase ?? null;
+  }, [gameState?.phase, isWinner]);
 
   const handleReturnToMenu = () => {
+    playClick();
     reset();
     setScreen('menu');
   };
-
-  const isWinner = gameState?.winner?.id === localFactionId;
 
   return (
     <div style={overlayStyle}>

@@ -4,6 +4,7 @@ import { Hex } from './Hex';
 import { Connections } from './Connections';
 import { Particles } from './Particles';
 import type { HexCoord } from '@/types/game';
+import { playPlaceUnit, playError } from '@/audio/sounds';
 
 const HEX_SIZE = 1;
 
@@ -19,7 +20,10 @@ export function HexMap() {
     if (gameState.phase !== 'playing') return;
 
     if (spendMoney(gameState.unitCost)) {
+      playPlaceUnit();
       gameClient.send({ type: 'placeUnits', coords });
+    } else {
+      playError();
     }
   };
 

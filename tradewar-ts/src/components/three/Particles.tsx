@@ -3,6 +3,7 @@ import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import type { Country, HexCoord } from '@/types/game';
 import { hexToPixel } from '@/game/hex';
+import { playBattle } from '@/audio/sounds';
 
 interface Particle {
   x: number;
@@ -69,6 +70,7 @@ export function Particles({ countries, size }: ParticlesProps) {
           const pos = hexToPixel(country.coords, size);
           emitBattleParticles(pos.x, pos.y, particlesRef.current);
           emitExplosion(pos.x, pos.y, explosionsRef.current, battleColor);
+          playBattle();
         }
       }
 

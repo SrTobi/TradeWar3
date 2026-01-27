@@ -1,6 +1,7 @@
 import { useRef, useEffect } from 'react';
 import { useGameStore } from '@/store/gameStore';
 import { calculateBulkUpgradeCost } from '@/game/stock';
+import { playBuy, playSell, playUpgrade } from '@/audio/sounds';
 
 const HISTORY_LENGTH = 20;
 
@@ -312,14 +313,14 @@ export function StockPanel() {
               </span>
               <button
                 style={canBuy ? buttonStyle : buttonDisabledStyle}
-                onClick={() => buyStock(company)}
+                onClick={() => { buyStock(company); playBuy(); }}
                 disabled={!canBuy}
               >
                 BUY
               </button>
               <button
                 style={canSell ? buttonStyle : buttonDisabledStyle}
-                onClick={() => sellStock(company)}
+                onClick={() => { sellStock(company); playSell(); }}
                 disabled={!canSell}
               >
                 SELL
@@ -336,7 +337,7 @@ export function StockPanel() {
         </span>
         <button
           style={local.money >= upgradeCost ? upgradeButtonStyle : upgradeDisabledStyle}
-          onClick={upgradeBulk}
+          onClick={() => { upgradeBulk(); playUpgrade(); }}
           disabled={local.money < upgradeCost}
         >
           UPGRADE (${upgradeCost.toLocaleString()})
