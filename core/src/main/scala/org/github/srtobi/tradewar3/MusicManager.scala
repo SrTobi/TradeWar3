@@ -4,46 +4,60 @@ import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.audio.Music
 import scala.compiletime.uninitialized
 
+enum MusicTrack:
+  case Menu, Game, Battle, Victory, Danger
+
 object MusicManager:
-  private var menuMusic: Music = uninitialized
-  private var gameMusic: Music = uninitialized
+  private var tracks: Map[MusicTrack, Music] = Map.empty
+  private var currentTrack: MusicTrack = uninitialized
   private var currentMusic: Music = uninitialized
   private var musicVolume: Float = GameConfig.MUSIC_DEFAULT_VOLUME
+  private var targetVolume: Float = GameConfig.MUSIC_DEFAULT_VOLUME
+  private var fadeSpeed: Float = 0.5f
 
-  private def ensureLoaded(): Unit =
-    if menuMusic == null then
+  private val trackFiles = Map(
+    MusicTrack.Menu -> "assets/music/menu.mp3",
+    MusicTrack.Game -> "assets/music/game.mp3",
+    MusicTrack.Battle -> "assets/music/battle.mp3",
+    MusicTrack.Victory -> "assets/music/victory.mp3",
+    MusicTrack.Danger -> "assets/music/danger.mp3"
+  )
+
+  private def loadTrack(track: MusicTrack): Option[Music] =
+    if tracks.contains(track) then return tracks.get(track)
+
+    trackFiles.get(track).flatMap { path =>
       try
-        menuMusic = Gdx.audio.newMusic(Gdx.files.internal("assets/music/menu.mp3"))
-        menuMusic.setLooping(true)
-        menuMusic.setVolume(musicVolume)
+        val music = Gdx.audio.newMusic(Gdx.files.internal(path))
+        music.setLooping(true)
+        music.setVolume(musicVolume)
+        tracks = tracks + (track -> music)
+        Some(music)
       catch
         case e: Exception =>
-          Gdx.app.log("MusicManager", s"Could not load menu music: ${e.getMessage}")
+          Gdx.app.log("MusicManager", s"Could not load $path: ${e.getMessage}")
+          None
+    }
 
-    if gameMusic == null then
-      try
-        gameMusic = Gdx.audio.newMusic(Gdx.files.internal("assets/music/game.mp3"))
-        gameMusic.setLooping(true)
-        gameMusic.setVolume(musicVolume)
-      catch
-        case e: Exception =>
-          Gdx.app.log("MusicManager", s"Could not load game music: ${e.getMessage}")
+  private def playTrack(track: MusicTrack): Unit =
+    if currentTrack == track && currentMusic != null && currentMusic.isPlaying then return
 
-  def playMenuMusic(): Unit =
-    ensureLoaded()
-    if currentMusic == menuMusic && menuMusic != null && menuMusic.isPlaying then return
-    if currentMusic != null && currentMusic.isPlaying then currentMusic.stop()
-    if menuMusic != null then
-      menuMusic.play()
-      currentMusic = menuMusic
+    loadTrack(track).foreach { music =>
+      if currentMusic != null && currentMusic.isPlaying then
+        currentMusic.stop()
+      music.setVolume(musicVolume)
+      music.play()
+      currentMusic = music
+      currentTrack = track
+    }
 
-  def playGameMusic(): Unit =
-    ensureLoaded()
-    if currentMusic == gameMusic && gameMusic != null && gameMusic.isPlaying then return
-    if currentMusic != null && currentMusic.isPlaying then currentMusic.stop()
-    if gameMusic != null then
-      gameMusic.play()
-      currentMusic = gameMusic
+  def playMenuMusic(): Unit = playTrack(MusicTrack.Menu)
+  def playGameMusic(): Unit = playTrack(MusicTrack.Game)
+  def playBattleMusic(): Unit = playTrack(MusicTrack.Battle)
+  def playVictoryMusic(): Unit = playTrack(MusicTrack.Victory)
+  def playDangerMusic(): Unit = playTrack(MusicTrack.Danger)
+
+  def getCurrentTrack: MusicTrack = currentTrack
 
   def stop(): Unit =
     if currentMusic != null then
@@ -59,8 +73,8 @@ object MusicManager:
 
   def setVolume(volume: Float): Unit =
     musicVolume = Math.max(0f, Math.min(1f, volume))
-    if menuMusic != null then menuMusic.setVolume(musicVolume)
-    if gameMusic != null then gameMusic.setVolume(musicVolume)
+    targetVolume = musicVolume
+    tracks.values.foreach(_.setVolume(musicVolume))
 
   def getVolume: Float = musicVolume
 
@@ -68,10 +82,6 @@ object MusicManager:
     currentMusic != null && currentMusic.isPlaying
 
   def dispose(): Unit =
-    if menuMusic != null then
-      menuMusic.dispose()
-      menuMusic = null
-    if gameMusic != null then
-      gameMusic.dispose()
-      gameMusic = null
+    tracks.values.foreach(_.dispose())
+    tracks = Map.empty
     currentMusic = null

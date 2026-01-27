@@ -35,7 +35,8 @@ object WarMap:
 
     val country = gameState.countries.find(_.coords == coords).get
     val newUnits = country.units + (faction -> (country.units.getOrElse(faction, 0) + amount))
-    val newCountry = country.copy(units = newUnits)
+    // Reset battle timer when placing units to give them a grace period
+    val newCountry = country.copy(units = newUnits, nextBattleUpdate = BATTLE_INTERVAL_MAX)
 
     val newState = gameState.copy(
       countries = gameState.countries.map(c => if c.coords == coords then newCountry else c)

@@ -43,8 +43,9 @@ class GameScreen(game: Tradewar3,
   private var localHoldings: Map[String, Int] = Map.empty
   private var localBulkAmount: Int = INITIAL_BULK_AMOUNT
 
-  // Track last broadcasted state to avoid redundant broadcasts
-  private var lastBroadcastedNetworkState: GameState = _
+  // Music state tracking
+  private var musicUpdateTimer: Float = 0f
+  private val musicUpdateInterval: Float = 2.0f
 
   // Creates a view of the game state with local money/holdings/bulk for UI
   private def localViewState: GameState =
@@ -198,34 +199,47 @@ class GameScreen(game: Tradewar3,
     // Render animated starfield background
     starfield.render(delta)
 
-    client.pollState().foreach { newState =>
-      val isFirstState = gameState == null
-      gameState = newState
-      if isFirstState then stockMarketUI.init(localViewState, localFaction)
-      updateUI()
-    }
+    // Only update gameState from network if we're NOT the host
+    // The host has authoritative state and shouldn't overwrite it
+    // (network state has battle timers stripped to 0)
+    if server.isEmpty then
+      client.pollState().foreach { newState =>
+        val isFirstState = gameState == null
+        gameState = newState
+        if isFirstState then stockMarketUI.init(localViewState, localFaction)
+        updateUI()
+      }
+    else
+      // Host still needs to initialize UI on first state
+      client.pollState().foreach { newState =>
+        if gameState == null then
+          gameState = newState
+          stockMarketUI.init(localViewState, localFaction)
+        updateUI()
+      }
 
     server.foreach { s =>
-      // Process actions
-      s.getActions.foreach(applyAction)
-
       if gameState != null then
-        // Update logic
+        // Update battles BEFORE processing actions, so newly placed units survive at least one frame
+        val (updatedGameState, _) = WarMap.updateBattles(gameState, delta)
+        gameState = updatedGameState
+
+        // Update stock prices
         val updatedCompanies = gameState.companies.map(c => StockMarket.updateCompany(c, delta))
         if updatedCompanies != gameState.companies then
             gameState = gameState.copy(companies = updatedCompanies)
 
-        val (updatedGameState, _) = WarMap.updateBattles(gameState, delta)
-        gameState = updatedGameState
+      // Process actions after battles
+      s.getActions.foreach(applyAction)
 
-        // Only broadcast if network-relevant state changed
-        val currentNetworkState = networkState
-        if currentNetworkState != lastBroadcastedNetworkState then
-          lastBroadcastedNetworkState = currentNetworkState
-          s.broadcast(GameStateUpdate(currentNetworkState))
+      if gameState != null then
+        // Broadcast state to all clients
+        s.broadcast(GameStateUpdate(networkState))
     }
 
     if gameState != null then
+        updateMusic(delta)
+
         if Gdx.input.isKeyJustPressed(Input.Keys.SPACE) && lastAction != null then
             lastAction()
 
@@ -249,6 +263,49 @@ class GameScreen(game: Tradewar3,
         server.foreach(_.stop())
         client.stop()
         game.setScreen(new MainMenuScreen(game))
+
+  private def updateMusic(delta: Float): Unit =
+    musicUpdateTimer += delta
+    if musicUpdateTimer < musicUpdateInterval then return
+    musicUpdateTimer = 0f
+
+    if gameState == null then return
+
+    val countries = gameState.countries
+    val totalTerritories = countries.size
+    val playerTerritories = countries.count(_.owner == localFaction)
+    val playerUnits = countries.filter(_.owner == localFaction).map(_.unitCount).sum
+
+    // Count territories with imminent battles (timer < 2 seconds)
+    val activeBattles = countries.count { c =>
+      c.nextBattleUpdate < 2.0f && c.unitCount > 0 && !c.owner.isNeutral
+    }
+
+    // Count enemy territories adjacent to player
+    val playerCoords = countries.filter(_.owner == localFaction).map(_.coords).toSet
+    val threatenedBorders = countries.count { c =>
+      c.owner != localFaction && !c.owner.isNeutral &&
+        c.coords.neighbors.exists(playerCoords.contains)
+    }
+
+    val playerShare = playerTerritories.toFloat / totalTerritories
+
+    // Determine music based on game state
+    if playerTerritories == 0 then
+      // Player eliminated
+      MusicManager.playDangerMusic()
+    else if playerShare > 0.6f then
+      // Dominating
+      MusicManager.playVictoryMusic()
+    else if playerShare < 0.15f || playerUnits < 5 then
+      // In danger
+      MusicManager.playDangerMusic()
+    else if activeBattles > 3 || threatenedBorders > 2 then
+      // Intense combat
+      MusicManager.playBattleMusic()
+    else
+      // Normal gameplay
+      MusicManager.playGameMusic()
 
   private def createGameSkin(): Skin =
     val skin = new Skin()
