@@ -14,7 +14,4 @@ case class GameStateUpdate(state: GameState) extends NetworkMessage
 sealed trait PlayerAction extends NetworkMessage:
   def faction: Faction
 
-case class BuyAction(faction: Faction, companyName: String) extends PlayerAction
-case class SellAction(faction: Faction, companyName: String) extends PlayerAction
 case class PlaceUnitsAction(faction: Faction, coords: HexCoordinate) extends PlayerAction
-case class UpgradeBulkAction(faction: Faction) extends PlayerAction

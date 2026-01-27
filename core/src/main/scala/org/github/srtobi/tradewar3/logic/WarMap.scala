@@ -21,30 +21,16 @@ object WarMap:
 
   def placeUnits(gameState: GameState, coords: HexCoordinate, faction: Faction, amount: Int): GameState =
     if !canPlaceUnits(gameState, coords, faction) then return gameState
-    
+
     val country = gameState.countries.find(_.coords == coords).get
-    val playerMoney = gameState.money.getOrElse(faction, 0L)
-    
-    var totalCost = 0L
-    var count = 0
-    var currentPrice = gameState.unitCost
-    
-    while count < amount && totalCost + currentPrice <= playerMoney do
-      totalCost += currentPrice
-      currentPrice += UNIT_COST_INCREASE
-      count += 1
-    
-    if count > 0 then
-      val newUnits = country.units + (faction -> (country.units.getOrElse(faction, 0) + count))
-      
-      val newCountry = country.copy(units = newUnits)
-      gameState.copy(
-        money = gameState.money + (faction -> (playerMoney - totalCost)),
-        countries = gameState.countries.map(c => if c.coords == coords then newCountry else c),
-        unitCost = currentPrice
-      )
-    else
-      gameState
+    val newUnits = country.units + (faction -> (country.units.getOrElse(faction, 0) + amount))
+    val newCountry = country.copy(units = newUnits)
+    val newUnitCost = gameState.unitCost + (amount * UNIT_COST_INCREASE)
+
+    gameState.copy(
+      countries = gameState.countries.map(c => if c.coords == coords then newCountry else c),
+      unitCost = newUnitCost
+    )
 
   def updateBattles(gameState: GameState, delta: Float): (GameState, Boolean) =
     var structuralChange = false

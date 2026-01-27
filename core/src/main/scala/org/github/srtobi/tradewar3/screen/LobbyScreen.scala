@@ -73,11 +73,11 @@ class LobbyScreen(game: Tradewar3,
     )
     
     val initialGameState = GameState(
-      money = factions.map(_ -> INITIAL_MONEY).toMap,
+      money = Map.empty,  // Client-only, not synced
       companies = companies,
-      holdings = factions.map(f => f -> selectedNames.map(_ -> 0).toMap).toMap,
+      holdings = Map.empty,  // Client-only, not synced
       countries = MapGenerator.generateMap(MAP_RADIUS, factions),
-      bulkAmount = factions.map(_ -> INITIAL_BULK_AMOUNT).toMap,
+      bulkAmount = Map.empty,  // Client-only, not synced
       unitCost = UNIT_COST
     )
     
