@@ -13,7 +13,7 @@ class GameServer(port: Int) {
   private val serverSocket = {
     val hints = new ServerSocketHints()
     hints.acceptTimeout = 0
-    Gdx.net.newServerSocket(Net.Protocol.TCP, port, hints)
+    Gdx.net.newServerSocket(Net.Protocol.TCP, "::", port, hints)
   }
   private val clients = new CopyOnWriteArrayList[ClientHandler]()
   private var running = true
