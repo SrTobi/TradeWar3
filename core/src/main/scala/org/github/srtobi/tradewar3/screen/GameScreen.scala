@@ -12,19 +12,22 @@ import org.github.srtobi.tradewar3.*
 import org.github.srtobi.tradewar3.Tradewar3
 import org.github.srtobi.tradewar3.logic.{MapGenerator, StockMarket, WarMap}
 import org.github.srtobi.tradewar3.model.*
-import org.github.srtobi.tradewar3.ui.{StockMarketUI, WarMapUI}
+import org.github.srtobi.tradewar3.ui.{StarfieldBackground, StockMarketUI, WarMapUI}
 import org.github.srtobi.tradewar3.net.*
 import org.github.srtobi.tradewar3.GameConfig.*
 
 import scala.compiletime.uninitialized
 
-class GameScreen(game: Tradewar3, 
-                 private val server: Option[GameServer], 
+class GameScreen(game: Tradewar3,
+                 private val server: Option[GameServer],
                  private val client: GameClient) extends BaseScreen:
   private val stage = new Stage(new ScreenViewport())
   private var skin: Skin = uninitialized
   private var gameState: GameState = uninitialized
-  
+
+  // Animated starfield background
+  private val starfield = new StarfieldBackground(400)
+
   // UI Components
   private var stockMarketUI: StockMarketUI = uninitialized
   private var warMapUI: WarMapUI = uninitialized
@@ -96,7 +99,7 @@ class GameScreen(game: Tradewar3,
 
     rootTable.add(stockMarketUI).expandY().fill().width(Value.percentWidth(UI_STOCK_PANEL_WIDTH_PERCENT, rootTable))
     rootTable.add(warMapUI).expandY().fill().expandX()
-    
+
     playerListTable = new Table()
     playerListTable.setFillParent(true)
     playerListTable.top().right()
@@ -104,14 +107,20 @@ class GameScreen(game: Tradewar3,
 
     if gameState != null then updateUI()
 
-  private def sendAction(action: PlaceUnitsAction): Unit =
-    client.send(action)
+  private def tryPlaceUnit(coords: HexCoordinate): Boolean =
+    if gameState == null then return false
+    if !WarMap.canPlaceUnits(gameState, coords, localFaction) then return false
+    if localMoney < gameState.unitCost then return false
+
+    localMoney -= gameState.unitCost
+    client.send(PlaceUnitsAction(localFaction, coords))
+    updateUI()
+    true
 
   private def applyAction(action: PlayerAction): Unit =
     action match
       case PlaceUnitsAction(faction, coords) =>
         placeUnits(faction, coords)
-      case _ => // Buy/Sell/Bulk actions are client-only, ignore from server
 
   private def buyStock(companyName: String): Unit =
     val company = gameState.companies.find(_.name == companyName).get
@@ -162,21 +171,26 @@ class GameScreen(game: Tradewar3,
           Color.WHITE
         else
           Color.BLACK
-      
+
       val style = new Label.LabelStyle(skin.get(classOf[Label.LabelStyle]))
       style.fontColor = fontColor
       val label = new Label(faction.name, style)
 
       val container = new Table()
-      container.setBackground(skin.newDrawable("white", factionColor))
-      container.add(label).pad(5, 15, 5, 15)
-      
-      playerListTable.add(container).pad(5).right()
+      // Slightly transparent background for better visual integration
+      val bgColor = new Color(factionColor.r * 0.9f, factionColor.g * 0.9f, factionColor.b * 0.9f, 0.9f)
+      container.setBackground(skin.newDrawable("white", bgColor))
+      container.add(label).pad(8, 20, 8, 20)
+
+      playerListTable.add(container).pad(3).right()
       playerListTable.row()
     }
 
   override def render(delta: Float): Unit =
     clearScreen()
+
+    // Render animated starfield background
+    starfield.render(delta)
 
     client.pollState().foreach { newState =>
       val isFirstState = gameState == null
@@ -188,7 +202,7 @@ class GameScreen(game: Tradewar3,
     server.foreach { s =>
       // Process actions
       s.getActions.foreach(applyAction)
-      
+
       if gameState != null then
         // Update logic
         val updatedCompanies = gameState.companies.map(c => StockMarket.updateCompany(c, delta))
@@ -202,7 +216,7 @@ class GameScreen(game: Tradewar3,
           // Broadcast state (without money/holdings/bulk - those are client-only)
           s.broadcast(GameStateUpdate(networkState))
     }
-    
+
     if gameState != null then
         if Gdx.input.isKeyJustPressed(Input.Keys.SPACE) && lastAction != null then
             lastAction()
@@ -212,10 +226,12 @@ class GameScreen(game: Tradewar3,
 
   override def resize(width: Int, height: Int): Unit =
     stage.getViewport.update(width, height, true)
+    starfield.resize(width, height)
 
   override def dispose(): Unit =
     stage.dispose()
     if skin != null then skin.dispose()
+    starfield.dispose()
     server.foreach(_.stop())
     client.stop()
 
@@ -230,18 +246,26 @@ class GameScreen(game: Tradewar3,
     val skin = new Skin()
     val generator = new FreeTypeFontGenerator(Gdx.files.internal("assets/fonts/Roboto-Regular.ttf"))
 
+    // Default font with subtle shadow for depth
     val parameter = new FreeTypeFontParameter()
     parameter.size = 32
+    parameter.shadowOffsetX = 1
+    parameter.shadowOffsetY = 1
+    parameter.shadowColor = new Color(0, 0, 0, 0.5f)
     val font = generator.generateFont(parameter)
     skin.add("default", font)
-    
+
+    // Big font with stronger shadow
     val bigParameter = new FreeTypeFontParameter()
     bigParameter.size = 42
+    bigParameter.shadowOffsetX = 2
+    bigParameter.shadowOffsetY = 2
+    bigParameter.shadowColor = new Color(0, 0, 0, 0.6f)
     val bigFont = generator.generateFont(bigParameter)
     skin.add("big", bigFont)
-    
+
     generator.dispose()
-    
+
     val pixmap = new Pixmap(1, 1, Pixmap.Format.RGBA8888)
     pixmap.setColor(Color.WHITE)
     pixmap.fill()
@@ -256,12 +280,15 @@ class GameScreen(game: Tradewar3,
     val bigLabelStyle = new Label.LabelStyle()
     bigLabelStyle.font = bigFont
     skin.add("big", bigLabelStyle)
-    
+
+    // Enhanced button style with cooler colors
     val textButtonStyle = new TextButton.TextButtonStyle()
-    textButtonStyle.up = skin.newDrawable("white", Color.DARK_GRAY)
-    textButtonStyle.down = skin.newDrawable("white", Color.LIGHT_GRAY)
-    textButtonStyle.over = skin.newDrawable("white", Color.GRAY)
-    textButtonStyle.disabled = skin.newDrawable("white", Color.BLACK)
+    textButtonStyle.up = skin.newDrawable("white", new Color(0.2f, 0.25f, 0.35f, 1f))
+    textButtonStyle.down = skin.newDrawable("white", new Color(0.35f, 0.4f, 0.5f, 1f))
+    textButtonStyle.over = skin.newDrawable("white", new Color(0.3f, 0.35f, 0.45f, 1f))
+    textButtonStyle.disabled = skin.newDrawable("white", new Color(0.12f, 0.12f, 0.18f, 0.7f))
     textButtonStyle.font = skin.getFont("default")
+    textButtonStyle.fontColor = Color.WHITE
+    textButtonStyle.disabledFontColor = new Color(0.5f, 0.5f, 0.5f, 1f)
     skin.add("default", textButtonStyle)
     skin
