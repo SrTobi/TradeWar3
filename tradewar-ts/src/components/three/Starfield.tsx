@@ -1,5 +1,5 @@
-import { useMemo, useRef } from 'react';
-import { useFrame } from '@react-three/fiber';
+import { useMemo, useRef, useEffect, type ReactElement } from 'react';
+import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 
 interface Star {
@@ -8,9 +8,10 @@ interface Star {
   speed: number;
   size: number;
   color: THREE.Color;
+  brightness: number;
   twinklePhase: number;
   twinkleSpeed: number;
-  layer: number;
+  hasGlow: boolean;
 }
 
 interface Nebula {
@@ -18,6 +19,7 @@ interface Nebula {
   y: number;
   radius: number;
   color: THREE.Color;
+  alpha: number;
   speed: number;
 }
 
@@ -31,148 +33,217 @@ interface ShootingStar {
   active: boolean;
 }
 
-const STAR_COUNT = 400;
+const STAR_COUNT = 300;
 const NEBULA_COUNT = 8;
+const NEBULA_LAYERS = 5;
 
-function createStars(): Star[] {
-  const stars: Star[] = [];
-
-  for (let i = 0; i < STAR_COUNT; i++) {
-    // Three layers: far (slow/small), mid, close (fast/large)
-    const layer = Math.random() < 0.5 ? 0 : Math.random() < 0.6 ? 1 : 2;
-
-    let speed: number, size: number;
-    if (layer === 0) {
-      speed = 5 + Math.random() * 10;
-      size = 0.3 + Math.random() * 0.8;
-    } else if (layer === 1) {
-      speed = 15 + Math.random() * 25;
-      size = 0.6 + Math.random() * 1.2;
-    } else {
-      speed = 30 + Math.random() * 50;
-      size = 1.0 + Math.random() * 2.0;
-    }
-
-    // Star colors: white-blue, blue, yellow, orange
-    let color: THREE.Color;
-    const colorRand = Math.random();
-    if (colorRand < 0.5) {
-      color = new THREE.Color(0.9 + Math.random() * 0.1, 0.9 + Math.random() * 0.1, 1.0);
-    } else if (colorRand < 0.75) {
-      color = new THREE.Color(0.7 + Math.random() * 0.3, 0.8 + Math.random() * 0.2, 1.0);
-    } else if (colorRand < 0.9) {
-      color = new THREE.Color(1.0, 1.0, 0.7 + Math.random() * 0.3);
-    } else {
-      color = new THREE.Color(1.0, 0.7 + Math.random() * 0.2, 0.5 + Math.random() * 0.2);
-    }
-
-    stars.push({
-      x: (Math.random() - 0.5) * 60,
-      y: (Math.random() - 0.5) * 40,
-      speed,
-      size: size * 0.02,
-      color,
-      twinklePhase: Math.random() * Math.PI * 2,
-      twinkleSpeed: 1 + Math.random() * 3,
-      layer,
-    });
+// Star colors from original
+function getStarColor(): THREE.Color {
+  const roll = Math.random();
+  if (roll < 0.5) {
+    // White-blue
+    return new THREE.Color(
+      0.9 + Math.random() * 0.1,
+      0.9 + Math.random() * 0.1,
+      1.0
+    );
+  } else if (roll < 0.75) {
+    // Blue
+    return new THREE.Color(
+      0.7 + Math.random() * 0.3,
+      0.8 + Math.random() * 0.2,
+      1.0
+    );
+  } else if (roll < 0.9) {
+    // Yellow
+    return new THREE.Color(
+      1.0,
+      1.0,
+      0.7 + Math.random() * 0.3
+    );
+  } else {
+    // Orange
+    return new THREE.Color(
+      1.0,
+      0.7 + Math.random() * 0.2,
+      0.5 + Math.random() * 0.2
+    );
   }
-
-  return stars;
 }
 
-function createNebulas(): Nebula[] {
-  const nebulaColors = [
-    new THREE.Color(0.2, 0.1, 0.4),   // Purple
-    new THREE.Color(0.1, 0.2, 0.4),   // Deep blue
-    new THREE.Color(0.3, 0.1, 0.2),   // Magenta
-    new THREE.Color(0.1, 0.3, 0.3),   // Teal
-    new THREE.Color(0.4, 0.2, 0.1),   // Orange
-  ];
-
-  return Array.from({ length: NEBULA_COUNT }, () => ({
-    x: (Math.random() - 0.5) * 80,
-    y: (Math.random() - 0.5) * 50,
-    radius: 3 + Math.random() * 4,
-    color: nebulaColors[Math.floor(Math.random() * nebulaColors.length)],
-    speed: 3 + Math.random() * 8,
-  }));
-}
+// Nebula colors from original
+const NEBULA_COLORS = [
+  { r: 0.2, g: 0.1, b: 0.4, a: 0.15 },  // Purple
+  { r: 0.1, g: 0.2, b: 0.4, a: 0.12 },  // Deep blue
+  { r: 0.3, g: 0.1, b: 0.2, a: 0.10 },  // Magenta
+  { r: 0.1, g: 0.3, b: 0.3, a: 0.08 },  // Teal
+  { r: 0.4, g: 0.2, b: 0.1, a: 0.10 },  // Orange-brown
+];
 
 export function Starfield() {
-  const starsRef = useRef(createStars());
-  const nebulasRef = useRef(createNebulas());
+  const { size } = useThree();
+  const starsRef = useRef<Star[]>([]);
+  const nebulasRef = useRef<Nebula[]>([]);
   const shootingStarRef = useRef<ShootingStar>({
     x: 0, y: 0, angle: 0, speed: 0, life: 0, maxLife: 0, active: false
   });
   const nextShootingStarRef = useRef(2 + Math.random() * 4);
-  const pointsRef = useRef<THREE.Points>(null);
+
+  const starMeshRef = useRef<THREE.InstancedMesh>(null);
+  const starGlowMeshRef = useRef<THREE.InstancedMesh>(null);
   const nebulaGroupRef = useRef<THREE.Group>(null);
-  const shootingStarMeshRef = useRef<THREE.Group>(null);
+  const shootingStarGroupRef = useRef<THREE.Group>(null);
 
-  const [starPositions, starColors, starSizes] = useMemo(() => {
-    const positions = new Float32Array(STAR_COUNT * 3);
-    const colors = new Float32Array(STAR_COUNT * 3);
-    const sizes = new Float32Array(STAR_COUNT);
+  // Calculate world bounds based on viewport
+  const worldBounds = useMemo(() => {
+    // Estimate world size based on typical zoom (will be updated)
+    const baseZoom = 50;
+    return {
+      halfW: size.width / baseZoom / 2 + 2,
+      halfH: size.height / baseZoom / 2 + 2,
+    };
+  }, [size.width, size.height]);
 
-    starsRef.current.forEach((star, i) => {
-      positions[i * 3] = star.x;
-      positions[i * 3 + 1] = star.y;
-      positions[i * 3 + 2] = -15 - star.layer * 2;
-      colors[i * 3] = star.color.r;
-      colors[i * 3 + 1] = star.color.g;
-      colors[i * 3 + 2] = star.color.b;
-      sizes[i] = star.size;
-    });
+  // Initialize stars
+  useEffect(() => {
+    const { halfW, halfH } = worldBounds;
+    const stars: Star[] = [];
 
-    return [positions, colors, sizes];
-  }, []);
+    for (let i = 0; i < STAR_COUNT; i++) {
+      const layer = Math.random();
+      let speed: number, starSize: number;
 
-  useFrame((_, delta) => {
+      if (layer < 0.5) {
+        // Far layer: slow, small
+        speed = 0.1 + Math.random() * 0.15;
+        starSize = 0.02 + Math.random() * 0.015;
+      } else if (layer < 0.8) {
+        // Mid layer
+        speed = 0.25 + Math.random() * 0.25;
+        starSize = 0.03 + Math.random() * 0.02;
+      } else {
+        // Close layer: fast, large
+        speed = 0.5 + Math.random() * 0.5;
+        starSize = 0.05 + Math.random() * 0.03;
+      }
+
+      stars.push({
+        x: (Math.random() - 0.5) * halfW * 2,
+        y: (Math.random() - 0.5) * halfH * 2,
+        speed,
+        size: starSize,
+        color: getStarColor(),
+        brightness: 0.6 + Math.random() * 0.4,
+        twinklePhase: Math.random() * Math.PI * 2,
+        twinkleSpeed: 1 + Math.random() * 3,
+        hasGlow: starSize > 0.05,
+      });
+    }
+    starsRef.current = stars;
+  }, [worldBounds]);
+
+  // Initialize nebulas
+  useEffect(() => {
+    const { halfW, halfH } = worldBounds;
+    const nebulas: Nebula[] = [];
+
+    for (let i = 0; i < NEBULA_COUNT; i++) {
+      const colorDef = NEBULA_COLORS[Math.floor(Math.random() * NEBULA_COLORS.length)];
+      nebulas.push({
+        x: (Math.random() - 0.5) * halfW * 2,
+        y: (Math.random() - 0.5) * halfH * 2,
+        radius: 2 + Math.random() * 2.5,
+        color: new THREE.Color(colorDef.r, colorDef.g, colorDef.b),
+        alpha: colorDef.a,
+        speed: 0.03 + Math.random() * 0.08,
+      });
+    }
+    nebulasRef.current = nebulas;
+  }, [worldBounds]);
+
+  const tempMatrix = useMemo(() => new THREE.Matrix4(), []);
+  const tempColor = useMemo(() => new THREE.Color(), []);
+
+  useFrame((state, delta) => {
     const stars = starsRef.current;
     const nebulas = nebulasRef.current;
     const shootingStar = shootingStarRef.current;
 
-    // Update stars
-    if (pointsRef.current) {
-      const positions = pointsRef.current.geometry.attributes.position.array as Float32Array;
-      const colors = pointsRef.current.geometry.attributes.color.array as Float32Array;
+    // Get actual camera bounds
+    const camera = state.camera as THREE.OrthographicCamera;
+    const actualHalfW = (camera.right - camera.left) / 2 / camera.zoom + 2;
+    const actualHalfH = (camera.top - camera.bottom) / 2 / camera.zoom + 2;
 
+    // Update stars
+    if (starMeshRef.current && stars.length > 0) {
       for (let i = 0; i < stars.length; i++) {
         const star = stars[i];
-        star.x -= star.speed * delta * 0.1;
-        star.twinklePhase += star.twinkleSpeed * delta;
 
-        if (star.x < -30) {
-          star.x = 30;
-          star.y = (Math.random() - 0.5) * 40;
+        // Move star
+        star.x -= star.speed * delta;
+        if (star.x < -actualHalfW) {
+          star.x = actualHalfW;
+          star.y = (Math.random() - 0.5) * actualHalfH * 2;
         }
 
-        positions[i * 3] = star.x;
-        positions[i * 3 + 1] = star.y;
-
-        // Twinkling effect
+        // Twinkle
+        star.twinklePhase += star.twinkleSpeed * delta;
         const twinkle = (Math.sin(star.twinklePhase) + 1) / 2 * 0.4 + 0.6;
-        colors[i * 3] = star.color.r * twinkle;
-        colors[i * 3 + 1] = star.color.g * twinkle;
-        colors[i * 3 + 2] = star.color.b * twinkle;
-      }
+        const brightness = star.brightness * twinkle;
 
-      pointsRef.current.geometry.attributes.position.needsUpdate = true;
-      pointsRef.current.geometry.attributes.color.needsUpdate = true;
+        // Update instance
+        tempMatrix.makeScale(star.size, star.size, 1);
+        tempMatrix.setPosition(star.x, star.y, -1);
+        starMeshRef.current.setMatrixAt(i, tempMatrix);
+
+        tempColor.setRGB(
+          star.color.r * brightness,
+          star.color.g * brightness,
+          star.color.b * brightness
+        );
+        starMeshRef.current.setColorAt(i, tempColor);
+
+        // Update glow for bright stars
+        if (starGlowMeshRef.current && star.hasGlow) {
+          tempMatrix.makeScale(star.size * 2.5, star.size * 2.5, 1);
+          tempMatrix.setPosition(star.x, star.y, -1.01);
+          starGlowMeshRef.current.setMatrixAt(i, tempMatrix);
+          tempColor.setRGB(
+            star.color.r * brightness * 0.3,
+            star.color.g * brightness * 0.3,
+            star.color.b * brightness * 0.3
+          );
+          starGlowMeshRef.current.setColorAt(i, tempColor);
+        }
+      }
+      starMeshRef.current.instanceMatrix.needsUpdate = true;
+      if (starMeshRef.current.instanceColor) {
+        starMeshRef.current.instanceColor.needsUpdate = true;
+      }
+      if (starGlowMeshRef.current) {
+        starGlowMeshRef.current.instanceMatrix.needsUpdate = true;
+        if (starGlowMeshRef.current.instanceColor) {
+          starGlowMeshRef.current.instanceColor.needsUpdate = true;
+        }
+      }
     }
 
     // Update nebulas
-    if (nebulaGroupRef.current) {
+    if (nebulaGroupRef.current && nebulas.length > 0) {
       nebulas.forEach((nebula, i) => {
-        nebula.x -= nebula.speed * delta * 0.05;
-        if (nebula.x < -45) {
-          nebula.x = 45;
-          nebula.y = (Math.random() - 0.5) * 50;
+        nebula.x -= nebula.speed * delta;
+        if (nebula.x < -actualHalfW - nebula.radius) {
+          nebula.x = actualHalfW + nebula.radius;
+          nebula.y = (Math.random() - 0.5) * actualHalfH * 2;
         }
-        const child = nebulaGroupRef.current!.children[i];
-        if (child) {
-          child.position.set(nebula.x, nebula.y, -20);
+
+        // Update all layers for this nebula
+        const baseIndex = i * NEBULA_LAYERS;
+        for (let layer = 0; layer < NEBULA_LAYERS; layer++) {
+          const child = nebulaGroupRef.current!.children[baseIndex + layer];
+          if (child) {
+            child.position.set(nebula.x, nebula.y, -2 - layer * 0.01);
+          }
         }
       });
     }
@@ -181,95 +252,102 @@ export function Starfield() {
     nextShootingStarRef.current -= delta;
     if (nextShootingStarRef.current <= 0 && !shootingStar.active) {
       shootingStar.active = true;
-      shootingStar.x = 35;
-      shootingStar.y = (Math.random() - 0.5) * 30;
+      shootingStar.x = actualHalfW + 1;
+      shootingStar.y = (Math.random() - 0.5) * actualHalfH * 1.5 + actualHalfH * 0.3;
       shootingStar.angle = 0.2 + Math.random() * 0.5;
-      shootingStar.speed = 300 + Math.random() * 400;
+      shootingStar.speed = 8 + Math.random() * 6;
       shootingStar.life = 0;
       shootingStar.maxLife = 0.4 + Math.random() * 0.8;
       nextShootingStarRef.current = 2 + Math.random() * 4;
     }
 
-    if (shootingStar.active && shootingStarMeshRef.current) {
+    if (shootingStar.active && shootingStarGroupRef.current) {
       shootingStar.life += delta;
-      shootingStar.x -= Math.cos(shootingStar.angle) * shootingStar.speed * delta * 0.02;
-      shootingStar.y -= Math.sin(shootingStar.angle) * shootingStar.speed * delta * 0.02;
+      shootingStar.x -= Math.cos(shootingStar.angle) * shootingStar.speed * delta;
+      shootingStar.y -= Math.sin(shootingStar.angle) * shootingStar.speed * delta;
 
       const progress = shootingStar.life / shootingStar.maxLife;
-      let alpha = 1;
-      if (progress < 0.3) alpha = progress / 0.3;
-      else alpha = 1 - (progress - 0.3) / 0.7;
+      let alpha = progress < 0.3 ? progress / 0.3 : (1 - progress) / 0.7;
 
-      shootingStarMeshRef.current.position.set(shootingStar.x, shootingStar.y, -5);
-      shootingStarMeshRef.current.visible = true;
+      shootingStarGroupRef.current.position.set(shootingStar.x, shootingStar.y, -0.5);
+      shootingStarGroupRef.current.rotation.z = -shootingStar.angle;
+      shootingStarGroupRef.current.visible = true;
 
-      // Update trail
-      const children = shootingStarMeshRef.current.children;
-      for (let i = 0; i < children.length; i++) {
-        const mesh = children[i] as THREE.Mesh;
+      // Update trail opacity
+      shootingStarGroupRef.current.children.forEach((child, i) => {
+        const mesh = child as THREE.Mesh;
         const mat = mesh.material as THREE.MeshBasicMaterial;
-        const tailProgress = i / children.length;
-        mat.opacity = alpha * (1 - tailProgress) * 0.8;
-        mesh.position.set(
-          Math.cos(shootingStar.angle) * tailProgress * 2,
-          Math.sin(shootingStar.angle) * tailProgress * 2,
-          0
-        );
-        mesh.scale.setScalar(1 - tailProgress * 0.7);
-      }
+        mat.opacity = alpha * (1 - i * 0.08);
+      });
 
       if (shootingStar.life >= shootingStar.maxLife) {
         shootingStar.active = false;
-        shootingStarMeshRef.current.visible = false;
+        shootingStarGroupRef.current.visible = false;
       }
     }
   });
 
-  const starGeometry = useMemo(() => {
-    const geo = new THREE.BufferGeometry();
-    geo.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
-    geo.setAttribute('color', new THREE.BufferAttribute(starColors, 3));
-    geo.setAttribute('size', new THREE.BufferAttribute(starSizes, 1));
-    return geo;
-  }, [starPositions, starColors, starSizes]);
+  // Create nebula layers for soft gradient effect
+  const nebulaElements = useMemo(() => {
+    const elements: ReactElement[] = [];
+    const nebulas = nebulasRef.current;
 
-  return (
-    <group>
-      {/* Nebulas */}
-      <group ref={nebulaGroupRef}>
-        {nebulasRef.current.map((nebula, i) => (
-          <mesh key={i} position={[nebula.x, nebula.y, -20]}>
-            <circleGeometry args={[nebula.radius, 32]} />
+    nebulas.forEach((nebula, i) => {
+      for (let layer = 0; layer < NEBULA_LAYERS; layer++) {
+        const scale = 1 - layer * 0.15;
+        const layerAlpha = nebula.alpha * (1 - layer * 0.2);
+        elements.push(
+          <mesh key={`${i}-${layer}`} position={[nebula.x, nebula.y, -2 - layer * 0.01]}>
+            <circleGeometry args={[nebula.radius * scale, 32]} />
             <meshBasicMaterial
               color={nebula.color}
               transparent
-              opacity={0.12}
+              opacity={layerAlpha}
               depthWrite={false}
             />
           </mesh>
-        ))}
+        );
+      }
+    });
+    return elements;
+  }, [nebulasRef.current.length > 0]);
+
+  return (
+    <group>
+      {/* Background color plane */}
+      <mesh position={[0, 0, -3]}>
+        <planeGeometry args={[100, 100]} />
+        <meshBasicMaterial color="#050508" />
+      </mesh>
+
+      {/* Nebulas with layered soft effect */}
+      <group ref={nebulaGroupRef}>
+        {nebulaElements}
       </group>
 
-      {/* Stars */}
-      <points ref={pointsRef} geometry={starGeometry}>
-        <pointsMaterial
-          size={0.08}
-          vertexColors
-          transparent
-          opacity={0.9}
-          sizeAttenuation
-          depthWrite={false}
-        />
-      </points>
+      {/* Star glow layer (for bright stars) */}
+      <instancedMesh ref={starGlowMeshRef} args={[undefined, undefined, STAR_COUNT]}>
+        <circleGeometry args={[1, 12]} />
+        <meshBasicMaterial transparent opacity={0.2} depthWrite={false} />
+      </instancedMesh>
 
-      {/* Shooting star */}
-      <group ref={shootingStarMeshRef} visible={false}>
-        {Array.from({ length: 10 }, (_, i) => (
-          <mesh key={i}>
-            <circleGeometry args={[0.06 - i * 0.005, 8]} />
-            <meshBasicMaterial color="#ffffff" transparent opacity={0.8} depthWrite={false} />
-          </mesh>
-        ))}
+      {/* Stars as instanced mesh */}
+      <instancedMesh ref={starMeshRef} args={[undefined, undefined, STAR_COUNT]}>
+        <circleGeometry args={[1, 8]} />
+        <meshBasicMaterial transparent depthWrite={false} />
+      </instancedMesh>
+
+      {/* Shooting star with longer tail */}
+      <group ref={shootingStarGroupRef} visible={false}>
+        {Array.from({ length: 12 }, (_, i) => {
+          const t = i / 12;
+          return (
+            <mesh key={i} position={[i * 0.06, 0, 0]}>
+              <circleGeometry args={[0.05 * (1 - t * 0.5), 6]} />
+              <meshBasicMaterial color="#ffffff" transparent opacity={0.9} depthWrite={false} />
+            </mesh>
+          );
+        })}
       </group>
     </group>
   );

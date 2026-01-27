@@ -1,12 +1,28 @@
 import type { GameState, Player, HexCoord } from '@/types/game';
 
+export interface GameInfo {
+  id: string;
+  hostName: string;
+  playerCount: number;
+  maxPlayers: number;
+  phase: 'lobby' | 'playing' | 'ended';
+  players: string[];
+}
+
 export type ClientMessage =
-  | { type: 'join'; playerName: string }
+  | { type: 'setName'; playerName: string }
+  | { type: 'listGames' }
+  | { type: 'createGame' }
+  | { type: 'joinGame'; gameId: string }
+  | { type: 'leaveGame' }
   | { type: 'startGame' }
   | { type: 'placeUnits'; coords: HexCoord };
 
 export type ServerMessage =
-  | { type: 'joinResponse'; playerId: string; factionId: string }
+  | { type: 'welcome'; playerId: string }
+  | { type: 'gameList'; games: GameInfo[] }
+  | { type: 'joinedGame'; gameId: string; factionId: string }
+  | { type: 'leftGame' }
   | { type: 'lobbyUpdate'; players: Player[] }
   | { type: 'gameStarted' }
   | { type: 'gameState'; state: GameState }

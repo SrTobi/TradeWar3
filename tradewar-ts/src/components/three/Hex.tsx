@@ -31,6 +31,31 @@ function darken(color: THREE.Color, amount: number): THREE.Color {
   );
 }
 
+// Get contrasting text color based on background brightness
+function getContrastColor(bgColor: THREE.Color): string {
+  const luminance = 0.299 * bgColor.r + 0.587 * bgColor.g + 0.114 * bgColor.b;
+  return luminance > 0.5 ? '#000000' : '#ffffff';
+}
+
+// Create rounded rectangle shape
+function createRoundedRectShape(width: number, height: number, radius: number): THREE.Shape {
+  const shape = new THREE.Shape();
+  const x = -width / 2;
+  const y = -height / 2;
+
+  shape.moveTo(x + radius, y);
+  shape.lineTo(x + width - radius, y);
+  shape.quadraticCurveTo(x + width, y, x + width, y + radius);
+  shape.lineTo(x + width, y + height - radius);
+  shape.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+  shape.lineTo(x + radius, y + height);
+  shape.quadraticCurveTo(x, y + height, x, y + height - radius);
+  shape.lineTo(x, y + radius);
+  shape.quadraticCurveTo(x, y, x + radius, y);
+
+  return shape;
+}
+
 export function Hex({ country, size, onClick }: HexProps) {
   const groupRef = useRef<THREE.Group>(null);
   const glowRingsRef = useRef<THREE.Group>(null);
@@ -74,9 +99,9 @@ export function Hex({ country, size, onClick }: HexProps) {
     const positions: number[] = [];
     const colors: number[] = [];
 
-    const hoverBoost = 0;
-    const centerColor = lighten(baseColor, 0.15 + hoverBoost);
-    const edgeColor = darken(baseColor, 0.1);
+    const hoverBoost = isHovered ? 0.15 : 0;
+    const centerColor = lighten(baseColor, 0.2 + hoverBoost);
+    const edgeColor = darken(baseColor, 0.15);
 
     for (let i = 0; i < 6; i++) {
       const v1 = hexVertices[i];
@@ -96,7 +121,7 @@ export function Hex({ country, size, onClick }: HexProps) {
     geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
     geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
     return geometry;
-  }, [hexVertices, baseColor]);
+  }, [hexVertices, baseColor, isHovered]);
 
   // Inner highlight ring (70% size)
   const innerRingGeometry = useMemo(() => {
@@ -104,8 +129,8 @@ export function Hex({ country, size, onClick }: HexProps) {
     for (let i = 0; i <= 6; i++) {
       const angle = (Math.PI / 3) * (i % 6);
       points.push(new THREE.Vector3(
-        size * 0.65 * Math.cos(angle),
-        size * 0.65 * Math.sin(angle),
+        size * 0.6 * Math.cos(angle),
+        size * 0.6 * Math.sin(angle),
         0.02
       ));
     }
@@ -129,7 +154,7 @@ export function Hex({ country, size, onClick }: HexProps) {
   // Glow ring geometries (3 concentric rings)
   const glowRingGeometries = useMemo(() => {
     return [0, 1, 2].map((ring) => {
-      const ringSize = size * (1.0 + ring * 0.08);
+      const ringSize = size * (1.0 + ring * 0.1);
       const shape = new THREE.Shape();
       for (let i = 0; i < 6; i++) {
         const angle = (Math.PI / 3) * i;
@@ -143,26 +168,37 @@ export function Hex({ country, size, onClick }: HexProps) {
     });
   }, [size]);
 
+  // Rounded badge geometry
+  const badgeGeometry = useMemo(() => {
+    const shape = createRoundedRectShape(size * 0.7, size * 0.35, size * 0.08);
+    return new THREE.ShapeGeometry(shape);
+  }, [size]);
+
+  const badgeShadowGeometry = useMemo(() => {
+    const shape = createRoundedRectShape(size * 0.7, size * 0.35, size * 0.08);
+    return new THREE.ShapeGeometry(shape);
+  }, [size]);
+
   useFrame((_, delta) => {
     pulseTimeRef.current += delta;
     const pulseTime = pulseTimeRef.current;
 
     // Update glow rings with pulsing
     if (glowRingsRef.current && !isNeutral) {
-      const glowPulse = (Math.sin(pulseTime * 2) + 1) / 2 * 0.15 + 0.1;
+      const glowPulse = (Math.sin(pulseTime * 2) + 1) / 2 * 0.2 + 0.15;
       glowRingsRef.current.children.forEach((child, i) => {
         const mesh = child as THREE.Mesh;
         const mat = mesh.material as THREE.MeshBasicMaterial;
-        mat.opacity = glowPulse * (1 - i * 0.3);
+        mat.opacity = glowPulse * (1 - i * 0.25);
       });
     }
 
     // Update inner highlight
     if (innerHighlightRef.current) {
       const mat = innerHighlightRef.current.material as THREE.LineBasicMaterial;
-      const highlightColor = lighten(baseColor, 0.3);
+      const highlightColor = lighten(baseColor, 0.4);
       mat.color = highlightColor;
-      mat.opacity = isNeutral ? 0.1 : 0.3;
+      mat.opacity = isNeutral ? 0.15 : 0.4;
     }
   });
 
@@ -179,7 +215,7 @@ export function Hex({ country, size, onClick }: HexProps) {
               <meshBasicMaterial
                 color={baseColor}
                 transparent
-                opacity={0.15 * (1 - i * 0.3)}
+                opacity={0.2 * (1 - i * 0.25)}
                 depthWrite={false}
               />
             </mesh>
@@ -197,7 +233,7 @@ export function Hex({ country, size, onClick }: HexProps) {
         <meshBasicMaterial
           vertexColors
           transparent
-          opacity={isHovered ? 0.95 : 0.85}
+          opacity={isHovered ? 1.0 : 0.9}
         />
       </mesh>
 
@@ -212,9 +248,9 @@ export function Hex({ country, size, onClick }: HexProps) {
       {/* Inner highlight */}
       <lineLoop ref={innerHighlightRef} geometry={innerRingGeometry}>
         <lineBasicMaterial
-          color={lighten(baseColor, 0.3)}
+          color={lighten(baseColor, 0.4)}
           transparent
-          opacity={0.3}
+          opacity={0.4}
         />
       </lineLoop>
 
@@ -223,28 +259,38 @@ export function Hex({ country, size, onClick }: HexProps) {
         <group position={[0, 0, 0.1]}>
           {unitEntries.map(([factionId, count], idx) => {
             const badgeColor = new THREE.Color(getFactionColor(factionId, localFactionId));
-            const yOffset = (idx - (unitEntries.length - 1) / 2) * size * 0.35;
+            const textColor = getContrastColor(badgeColor);
+            const yOffset = (unitEntries.length - 1) / 2 * size * 0.4 - idx * size * 0.4;
+
             return (
               <group key={factionId} position={[0, yOffset, 0]}>
                 {/* Badge background shadow */}
-                <mesh position={[0.02, -0.02, -0.01]}>
-                  <planeGeometry args={[size * 0.6, size * 0.28]} />
-                  <meshBasicMaterial color="#000000" transparent opacity={0.3} />
+                <mesh geometry={badgeShadowGeometry} position={[size * 0.02, -size * 0.02, -0.01]}>
+                  <meshBasicMaterial color="#000000" transparent opacity={0.4} />
                 </mesh>
                 {/* Badge background */}
-                <mesh>
-                  <planeGeometry args={[size * 0.6, size * 0.28]} />
-                  <meshBasicMaterial color={badgeColor} transparent opacity={0.9} />
+                <mesh geometry={badgeGeometry}>
+                  <meshBasicMaterial color={badgeColor} />
+                </mesh>
+                {/* Badge border highlight */}
+                <mesh geometry={badgeGeometry} position={[0, 0, 0.005]}>
+                  <meshBasicMaterial
+                    color={lighten(badgeColor, 0.3)}
+                    transparent
+                    opacity={0.5}
+                    wireframe
+                  />
                 </mesh>
                 {/* Unit count text */}
                 <Text
-                  position={[0, 0, 0.01]}
-                  fontSize={size * 0.22}
-                  color="#ffffff"
+                  position={[0, 0, 0.02]}
+                  fontSize={size * 0.28}
+                  color={textColor}
                   anchorX="center"
                   anchorY="middle"
-                  outlineWidth={0.01}
-                  outlineColor="#000000"
+                  fontWeight="bold"
+                  outlineWidth={size * 0.015}
+                  outlineColor={textColor === '#ffffff' ? '#000000' : '#ffffff'}
                 >
                   {count}
                 </Text>
