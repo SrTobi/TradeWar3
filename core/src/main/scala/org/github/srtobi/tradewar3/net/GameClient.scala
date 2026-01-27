@@ -19,9 +19,14 @@ class GameClient(host: String, port: Int) {
   private var gameStarted: Boolean = false
 
   private val thread = new Thread(() => {
+    Gdx.app.log("Client", "Receiver thread started")
     try {
       while (running) {
+        Gdx.app.log("Client", "Waiting for message...")
+        val start = System.currentTimeMillis()
         val obj = in.readObject()
+        val elapsed = System.currentTimeMillis() - start
+        Gdx.app.log("Client", s"Received ${obj.getClass.getSimpleName} in ${elapsed}ms")
         obj match {
           case JoinResponse(faction) =>
             assignedFaction = Some(faction)
@@ -39,6 +44,7 @@ class GameClient(host: String, port: Int) {
       case NonFatal(e) if running => Gdx.app.error("Client", "Error in client thread", e)
       case _: Throwable =>
     }
+    Gdx.app.log("Client", "Receiver thread stopped")
   }, "GameClient-Receiver")
 
   def getFactionColors = new FactionColors(assignedFaction.get, lobbyPlayers)

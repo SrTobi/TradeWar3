@@ -37,6 +37,8 @@ class GameServer(port: Int) {
   thread.start()
 
   def broadcast(message: NetworkMessage): Unit = {
+    val clientCount = clients.size()
+    Gdx.app.log("Server", s"Broadcasting to $clientCount clients, queue sizes: ${clients.asScala.map(_.queueSize).mkString(", ")}")
     clients.forEach(_.send(message))
   }
 
@@ -63,24 +65,38 @@ class GameServer(port: Int) {
 
     private val sendQueue = new java.util.concurrent.LinkedBlockingQueue[NetworkMessage]()
     private val senderThread = new Thread(() => {
+      Gdx.app.log("Server", s"Sender thread started for $faction")
       while (handlerRunning) {
         try {
+          val qSize = sendQueue.size()
+          if (qSize > 5) {
+            Gdx.app.log("Server", s"Queue backing up for $faction: $qSize messages")
+          }
           val message = sendQueue.poll(100, java.util.concurrent.TimeUnit.MILLISECONDS)
           if (message != null) {
+            val start = System.currentTimeMillis()
             out.synchronized {
+              Gdx.app.log("Server", s"Writing message to $faction...")
               out.writeObject(message)
+              Gdx.app.log("Server", s"Flushing to $faction...")
               out.flush()
+              Gdx.app.log("Server", s"Resetting stream for $faction...")
               out.reset()
+            }
+            val elapsed = System.currentTimeMillis() - start
+            if (elapsed > 100) {
+              Gdx.app.log("Server", s"SLOW send to $faction: ${elapsed}ms")
             }
           }
         } catch {
           case _: InterruptedException => // Normal during shutdown
           case NonFatal(e) if handlerRunning =>
-            Gdx.app.error("Server", "Error sending message", e)
+            Gdx.app.error("Server", s"Error sending message to $faction", e)
             stop()
           case _: Throwable =>
         }
       }
+      Gdx.app.log("Server", s"Sender thread stopped for $faction")
     }, "ClientHandler-Sender")
     senderThread.setDaemon(true)
     senderThread.start()
@@ -90,6 +106,8 @@ class GameServer(port: Int) {
         sendQueue.offer(message)
       }
     }
+
+    def queueSize: Int = sendQueue.size()
 
     def pollActions(): Seq[PlayerAction] = {
       val actions = List.newBuilder[PlayerAction]

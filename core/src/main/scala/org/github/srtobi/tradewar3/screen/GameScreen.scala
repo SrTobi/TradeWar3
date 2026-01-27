@@ -247,7 +247,12 @@ class GameScreen(game: Tradewar3,
       if gameState != null && needsBroadcast && broadcastTimer >= broadcastInterval then
         broadcastTimer = 0f
         needsBroadcast = false
+        Gdx.app.log("GameScreen", "About to broadcast...")
+        val start = System.currentTimeMillis()
         s.broadcast(GameStateUpdate(networkState))
+        val elapsed = System.currentTimeMillis() - start
+        if elapsed > 10 then
+          Gdx.app.log("GameScreen", s"Broadcast took ${elapsed}ms")
     }
 
     if gameState != null then
