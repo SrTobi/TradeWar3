@@ -10,6 +10,7 @@ import com.badlogic.gdx.scenes.scene2d.{Actor, Stage}
 import com.badlogic.gdx.utils.viewport.ScreenViewport
 import org.github.srtobi.tradewar3.*
 import org.github.srtobi.tradewar3.Tradewar3
+import org.github.srtobi.tradewar3.MusicManager
 import org.github.srtobi.tradewar3.logic.{MapGenerator, StockMarket, WarMap}
 import org.github.srtobi.tradewar3.model.*
 import org.github.srtobi.tradewar3.ui.{StarfieldBackground, StockMarketUI, WarMapUI}
@@ -67,6 +68,7 @@ class GameScreen(game: Tradewar3,
   override def show(): Unit =
     Gdx.input.setInputProcessor(stage)
     skin = createGameSkin()
+    MusicManager.playGameMusic()
 
     setupUI()
 

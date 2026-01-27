@@ -9,6 +9,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.{Label, Skin, Table, TextButton}
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener
 import com.badlogic.gdx.utils.viewport.ScreenViewport
 import org.github.srtobi.tradewar3.Tradewar3
+import org.github.srtobi.tradewar3.MusicManager
 import org.github.srtobi.tradewar3.net.*
 import org.github.srtobi.tradewar3.ui.StarfieldBackground
 import org.github.srtobi.tradewar3.model.*
@@ -34,6 +35,7 @@ class LobbyScreen(game: Tradewar3,
   override def show(): Unit =
     Gdx.input.setInputProcessor(stage)
     skin = createSimpleSkin()
+    MusicManager.playMenuMusic()
 
     val rootTable = new Table()
     rootTable.setFillParent(true)

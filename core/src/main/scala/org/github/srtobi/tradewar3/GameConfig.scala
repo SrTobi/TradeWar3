@@ -31,6 +31,9 @@ object GameConfig:
   // UI
   val UI_STOCK_PANEL_WIDTH_PERCENT = 0.33f
   val UI_HEX_SIZE = 80f
-  
+
   // Networking
   val DEFAULT_PORT = 12345
+
+  // Music (procedural)
+  val MUSIC_DEFAULT_VOLUME = 0.7f

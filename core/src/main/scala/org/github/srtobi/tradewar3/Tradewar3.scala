@@ -8,5 +8,6 @@ class Tradewar3 extends Game:
     setScreen(new MainMenuScreen(this))
 
   override def dispose(): Unit =
+    MusicManager.dispose()
     if getScreen != null then getScreen.dispose()
     super.dispose()

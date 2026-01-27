@@ -9,6 +9,7 @@ import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener
 import com.badlogic.gdx.scenes.scene2d.{Actor, Stage}
 import com.badlogic.gdx.utils.viewport.ScreenViewport
 import org.github.srtobi.tradewar3.Tradewar3
+import org.github.srtobi.tradewar3.MusicManager
 import org.github.srtobi.tradewar3.net.*
 import org.github.srtobi.tradewar3.ui.StarfieldBackground
 import org.github.srtobi.tradewar3.GameConfig.*
@@ -23,6 +24,7 @@ class MainMenuScreen(game: Tradewar3) extends BaseScreen:
   override def show(): Unit =
     Gdx.input.setInputProcessor(stage)
     skin = createSimpleSkin()
+    MusicManager.playMenuMusic()
 
     val table = new Table()
     table.setFillParent(true)
