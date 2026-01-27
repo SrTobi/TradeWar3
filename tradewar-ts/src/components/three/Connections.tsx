@@ -48,7 +48,7 @@ export function Connections({ countries, size }: ConnectionsProps) {
 
         const from = hexToPixel(country.coords, size);
         const to = hexToPixel(neighborCoord, size);
-        const color = getFactionColor(owner, localFactionId);
+        const color = getFactionColor(owner);
 
         result.push({ from, to, color });
       }

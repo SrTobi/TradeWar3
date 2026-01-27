@@ -53,17 +53,15 @@ export const NEUTRAL_FACTION: Faction = {
 
 export const FACTION_COLORS: Record<string, string> = {
   neutral: '#666666',
-  player: '#44ff88',  // Local player always green
   faction0: '#4488ff',  // Blue
   faction1: '#ff4444',  // Red
   faction2: '#ffaa00',  // Orange
-  faction3: '#ff44ff',  // Magenta
-  faction4: '#44ffff',  // Cyan
-  faction5: '#ffff44',  // Yellow
+  faction3: '#44ff88',  // Green
+  faction4: '#ff44ff',  // Magenta
+  faction5: '#44ffff',  // Cyan
 };
 
-export function getFactionColor(factionId: string, localFactionId: string | null): string {
+export function getFactionColor(factionId: string): string {
   if (factionId === 'neutral') return FACTION_COLORS.neutral;
-  if (factionId === localFactionId) return FACTION_COLORS.player;
-  return FACTION_COLORS[factionId] || FACTION_COLORS.faction1;
+  return FACTION_COLORS[factionId] || FACTION_COLORS.faction0;
 }

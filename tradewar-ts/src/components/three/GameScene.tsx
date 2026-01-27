@@ -14,6 +14,7 @@ const MAP_RADIUS = GAME.MAP_RADIUS;
 const MAP_WIDTH = (MAP_RADIUS * 2 + 1) * HEX_SIZE * 1.75;
 const MAP_HEIGHT = (MAP_RADIUS * 2 + 1) * HEX_SIZE * Math.sqrt(3);
 const PADDING = 1.5; // Extra padding around the map
+const LEFT_PANEL_WIDTH = 520; // Width of StockPanel in pixels
 
 function CameraController() {
   const { camera, size } = useThree();
@@ -24,24 +25,33 @@ function CameraController() {
   }, [camera]);
 
   useEffect(() => {
-    const updateZoom = () => {
+    const updateCamera = () => {
       const cam = cameraRef.current;
       if (!cam) return;
 
-      // Calculate zoom to fit the map in the viewport
+      // Available width after accounting for left panel
+      const availableWidth = size.width - LEFT_PANEL_WIDTH;
+
+      // Calculate zoom to fit the map in the available viewport
       const worldWidth = MAP_WIDTH + PADDING * 2;
       const worldHeight = MAP_HEIGHT + PADDING * 2;
 
       // Zoom is pixels per world unit
-      const zoomX = size.width / worldWidth;
+      const zoomX = availableWidth / worldWidth;
       const zoomY = size.height / worldHeight;
 
       // Use the smaller zoom to ensure the entire map fits
       cam.zoom = Math.min(zoomX, zoomY);
+
+      // Offset camera to center map in available space (right of panel)
+      // Move camera LEFT so the content appears shifted RIGHT
+      const offsetX = LEFT_PANEL_WIDTH / 2 / cam.zoom;
+      cam.position.x = -offsetX;
+
       cam.updateProjectionMatrix();
     };
 
-    updateZoom();
+    updateCamera();
   }, [size.width, size.height]);
 
   return null;

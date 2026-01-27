@@ -6,7 +6,6 @@ import { getFactionColor } from '@/types/game';
 import { getCountryOwner } from '@/game/battle';
 import { hexToPixel } from '@/game/hex';
 import { useUIStore } from '@/store/uiStore';
-import { useGameStore } from '@/store/gameStore';
 import { Text } from '@react-three/drei';
 
 interface HexProps {
@@ -64,7 +63,6 @@ export function Hex({ country, size, onClick }: HexProps) {
 
   const hoveredHex = useUIStore((s) => s.hoveredHex);
   const setHoveredHex = useUIStore((s) => s.setHoveredHex);
-  const localFactionId = useGameStore((s) => s.local.factionId);
 
   const owner = getCountryOwner(country);
   const isHovered = hoveredHex?.q === country.coords.q && hoveredHex?.r === country.coords.r;
@@ -76,8 +74,8 @@ export function Hex({ country, size, onClick }: HexProps) {
   }, [country.coords.q, country.coords.r, size]);
 
   const baseColor = useMemo(
-    () => new THREE.Color(getFactionColor(owner, localFactionId)),
-    [owner, localFactionId]
+    () => new THREE.Color(getFactionColor(owner)),
+    [owner]
   );
 
   // Hex vertices for flat-top orientation
@@ -258,7 +256,7 @@ export function Hex({ country, size, onClick }: HexProps) {
       {unitEntries.length > 0 && (
         <group position={[0, 0, 0.1]}>
           {unitEntries.map(([factionId, count], idx) => {
-            const badgeColor = new THREE.Color(getFactionColor(factionId, localFactionId));
+            const badgeColor = new THREE.Color(getFactionColor(factionId));
             const textColor = getContrastColor(badgeColor);
             const yOffset = (unitEntries.length - 1) / 2 * size * 0.4 - idx * size * 0.4;
 

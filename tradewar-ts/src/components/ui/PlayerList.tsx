@@ -26,7 +26,7 @@ export function PlayerList() {
   return (
     <div style={containerStyle}>
       {gameState.players.map((player) => {
-        const color = getFactionColor(player.factionId, localFactionId);
+        const color = getFactionColor(player.factionId);
         const isLocal = player.factionId === localFactionId;
 
         return (
