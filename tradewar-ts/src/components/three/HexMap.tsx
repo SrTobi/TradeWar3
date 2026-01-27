@@ -4,6 +4,7 @@ import { Hex } from './Hex';
 import { Connections } from './Connections';
 import { Particles } from './Particles';
 import type { HexCoord } from '@/types/game';
+import { canPlaceUnits } from '@/game/battle';
 import { playPlaceUnit, playError } from '@/audio/sounds';
 
 const HEX_SIZE = 1;
@@ -19,6 +20,19 @@ export function HexMap() {
     if (!localFactionId) return;
     if (gameState.phase !== 'playing') return;
 
+    // Find the country at these coordinates
+    const country = gameState.countries.find(
+      (c) => c.coords.q === coords.q && c.coords.r === coords.r
+    );
+    if (!country) return;
+
+    // Check if we can place units here
+    if (!canPlaceUnits(country, gameState.countries, localFactionId)) {
+      playError();
+      return;
+    }
+
+    // Now try to spend money
     if (spendMoney(gameState.unitCost)) {
       playPlaceUnit();
       gameClient.send({ type: 'placeUnits', coords });

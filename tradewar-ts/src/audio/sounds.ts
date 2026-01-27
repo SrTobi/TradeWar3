@@ -1,9 +1,5 @@
-// Sound effects using pre-generated MP3 files
+// Sound effects using pre-generated MP3 files with preloading
 
-// Audio cache to avoid reloading
-const audioCache = new Map<string, HTMLAudioElement>();
-
-// Preload all sounds
 const SOUNDS = {
   click: '/sfx/click.mp3',
   buy: '/sfx/buy.mp3',
@@ -19,42 +15,42 @@ const SOUNDS = {
 
 type SoundName = keyof typeof SOUNDS;
 
-// Preload sounds on module load
-function preloadSounds(): void {
-  for (const [name, path] of Object.entries(SOUNDS)) {
-    const audio = new Audio(path);
-    audio.preload = 'auto';
-    audioCache.set(name, audio);
-  }
+// Preloaded audio elements
+const preloadedAudio = new Map<SoundName, HTMLAudioElement>();
+
+// Preload all sounds immediately
+for (const [name, path] of Object.entries(SOUNDS)) {
+  const audio = new Audio(path);
+  audio.preload = 'auto';
+  audio.load(); // Force load
+  preloadedAudio.set(name as SoundName, audio);
 }
 
-// Initialize preloading
-preloadSounds();
-
-// Play a sound by name
+// Play a sound by cloning the preloaded audio (instant playback)
 function playSound(name: SoundName, volume: number = 0.5): void {
+  const source = preloadedAudio.get(name);
+  if (!source) return;
+
   try {
-    // Create a new audio instance for overlapping sounds
-    const audio = new Audio(SOUNDS[name]);
+    // Clone the preloaded audio for overlapping sounds
+    const audio = source.cloneNode(true) as HTMLAudioElement;
     audio.volume = volume;
     audio.play().catch(() => {
-      // Ignore autoplay errors - user hasn't interacted yet
+      // Ignore autoplay errors
     });
   } catch {
     // Ignore errors
   }
 }
 
-// Resume audio context on user interaction (for browsers that require it)
+// Resume audio context on user interaction
 export function resumeAudio(): void {
-  // HTML5 Audio doesn't need explicit resume like Web Audio API
-  // But we can trigger a silent play to unlock audio on iOS
-  const audio = audioCache.get('click');
+  // Trigger a silent play to unlock audio on mobile
+  const audio = preloadedAudio.get('click');
   if (audio) {
-    audio.volume = 0;
-    audio.play().catch(() => {}).finally(() => {
-      audio.volume = 0.5;
-    });
+    const clone = audio.cloneNode(true) as HTMLAudioElement;
+    clone.volume = 0;
+    clone.play().catch(() => {});
   }
 }
 
