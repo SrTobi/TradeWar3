@@ -1,6 +1,8 @@
 import { useGameStore } from '@/store/gameStore';
 import { gameClient } from '@/network/client';
 import { Hex } from './Hex';
+import { Connections } from './Connections';
+import { Particles } from './Particles';
 import type { HexCoord } from '@/types/game';
 
 const HEX_SIZE = 1;
@@ -23,6 +25,10 @@ export function HexMap() {
 
   return (
     <group>
+      {/* Connection bridges between allied territories */}
+      <Connections countries={gameState.countries} size={HEX_SIZE} />
+
+      {/* Hex tiles */}
       {gameState.countries.map((country) => (
         <Hex
           key={`${country.coords.q},${country.coords.r}`}
@@ -31,6 +37,9 @@ export function HexMap() {
           onClick={() => handleHexClick(country.coords)}
         />
       ))}
+
+      {/* Battle particles */}
+      <Particles countries={gameState.countries} size={HEX_SIZE} />
     </group>
   );
 }

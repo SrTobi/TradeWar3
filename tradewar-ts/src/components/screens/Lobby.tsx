@@ -9,45 +9,77 @@ const containerStyle: React.CSSProperties = {
   alignItems: 'center',
   justifyContent: 'center',
   height: '100%',
-  background: 'linear-gradient(180deg, #0a0a1a 0%, #1a1a3a 100%)',
+  background: 'linear-gradient(180deg, #080810 0%, #101828 50%, #0a1020 100%)',
+  fontFamily: "'Segoe UI', system-ui, sans-serif",
 };
 
 const titleStyle: React.CSSProperties = {
-  fontSize: '36px',
+  fontSize: '52px',
   fontWeight: 'bold',
-  color: '#4af',
+  color: '#88bbee',
+  marginBottom: '8px',
+  textShadow: '0 0 30px rgba(136, 187, 238, 0.5), 0 4px 8px rgba(0,0,0,0.8)',
+  letterSpacing: '4px',
+};
+
+const subtitleStyle: React.CSSProperties = {
+  fontSize: '18px',
+  color: '#667788',
+  marginBottom: '32px',
+  fontStyle: 'italic',
+};
+
+const playerContainerStyle: React.CSSProperties = {
+  background: 'rgba(26, 31, 46, 0.85)',
+  borderRadius: '12px',
+  border: '2px solid rgba(77, 102, 128, 0.4)',
+  padding: '20px',
+  minWidth: '400px',
+  minHeight: '150px',
   marginBottom: '32px',
 };
 
-const playerListStyle: React.CSSProperties = {
+const playerRowStyle: React.CSSProperties = {
   display: 'flex',
-  flexDirection: 'column',
-  gap: '8px',
-  marginBottom: '32px',
-  minWidth: '300px',
+  alignItems: 'center',
+  gap: '12px',
+  padding: '10px 16px',
+  borderRadius: '6px',
+  marginBottom: '8px',
 };
 
-const playerStyle: React.CSSProperties = {
-  padding: '12px 20px',
-  borderRadius: '6px',
-  fontSize: '16px',
-  fontWeight: 'bold',
-  textAlign: 'center',
+const colorBoxStyle: React.CSSProperties = {
+  width: '24px',
+  height: '24px',
+  borderRadius: '4px',
+  border: '2px solid rgba(255,255,255,0.3)',
 };
 
 const buttonStyle: React.CSSProperties = {
-  padding: '14px 32px',
+  padding: '16px 40px',
   fontSize: '18px',
   fontWeight: 'bold',
-  background: '#353',
-  border: '2px solid #575',
-  borderRadius: '6px',
+  background: 'linear-gradient(180deg, rgba(51, 85, 51, 1) 0%, rgba(35, 65, 35, 1) 100%)',
+  border: '2px solid rgba(85, 153, 85, 0.6)',
+  borderRadius: '8px',
   color: '#fff',
   cursor: 'pointer',
+  transition: 'all 0.2s',
+  textShadow: '0 2px 4px rgba(0,0,0,0.5)',
+  letterSpacing: '2px',
+};
+
+const retreatButtonStyle: React.CSSProperties = {
+  ...buttonStyle,
+  padding: '12px 28px',
+  fontSize: '14px',
+  background: 'linear-gradient(180deg, rgba(85, 51, 51, 1) 0%, rgba(65, 35, 35, 1) 100%)',
+  border: '2px solid rgba(153, 85, 85, 0.6)',
+  marginTop: '16px',
 };
 
 const waitingStyle: React.CSSProperties = {
-  color: '#888',
+  color: '#778899',
   fontSize: '16px',
   fontStyle: 'italic',
 };
@@ -73,11 +105,12 @@ export function Lobby() {
 
   return (
     <div style={containerStyle}>
-      <h1 style={titleStyle}>BATTLE LOBBY</h1>
+      <h1 style={titleStyle}>BATTLE STATIONS</h1>
+      <p style={subtitleStyle}>Waiting for commanders...</p>
 
-      <div style={playerListStyle}>
-        <p style={{ color: '#666', marginBottom: '8px', textAlign: 'center' }}>
-          Commanders Ready ({players.length})
+      <div style={playerContainerStyle}>
+        <p style={{ color: '#667788', marginBottom: '12px', fontSize: '14px', textAlign: 'center' }}>
+          COMMANDERS READY ({players.length})
         </p>
         {players.map((player) => {
           const color = getFactionColor(player.factionId, local.factionId);
@@ -86,12 +119,18 @@ export function Lobby() {
             <div
               key={player.id}
               style={{
-                ...playerStyle,
-                background: color,
-                border: isLocal ? '2px solid white' : '2px solid transparent',
+                ...playerRowStyle,
+                background: isLocal ? 'rgba(68, 136, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)',
+                border: isLocal ? '1px solid rgba(68, 136, 255, 0.5)' : '1px solid transparent',
               }}
             >
-              {player.name} {isLocal ? '(You)' : ''}
+              <div style={{ ...colorBoxStyle, background: color }} />
+              <span style={{ color: '#dde', fontWeight: 'bold', flex: 1 }}>
+                {player.name}
+              </span>
+              {isLocal && (
+                <span style={{ color: '#88aaff', fontSize: '12px' }}>(YOU)</span>
+              )}
             </div>
           );
         })}
@@ -109,15 +148,7 @@ export function Lobby() {
         <p style={waitingStyle}>Awaiting host command...</p>
       )}
 
-      <button
-        style={{
-          ...buttonStyle,
-          background: '#533',
-          borderColor: '#755',
-          marginTop: '16px',
-        }}
-        onClick={handleRetreat}
-      >
+      <button style={retreatButtonStyle} onClick={handleRetreat}>
         RETREAT
       </button>
     </div>

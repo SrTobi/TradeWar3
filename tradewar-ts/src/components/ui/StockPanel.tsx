@@ -7,48 +7,77 @@ const panelStyle: React.CSSProperties = {
   left: 0,
   width: '320px',
   height: '100%',
-  background: 'rgba(10, 10, 30, 0.9)',
-  borderRight: '2px solid #334',
+  background: 'rgba(20, 26, 38, 0.92)',
+  borderRight: '2px solid rgba(77, 102, 128, 0.5)',
   padding: '16px',
   display: 'flex',
   flexDirection: 'column',
   gap: '12px',
   overflow: 'auto',
+  fontFamily: "'Segoe UI', system-ui, sans-serif",
 };
 
-const headerStyle: React.CSSProperties = {
-  fontSize: '20px',
+const titleStyle: React.CSSProperties = {
+  fontSize: '22px',
   fontWeight: 'bold',
-  color: '#4af',
+  color: '#88aacc',
   textAlign: 'center',
   marginBottom: '8px',
+  textShadow: '0 2px 4px rgba(0,0,0,0.5)',
+  letterSpacing: '2px',
 };
 
 const statsRowStyle: React.CSSProperties = {
   display: 'flex',
   justifyContent: 'space-between',
-  padding: '8px',
+  padding: '10px 12px',
   background: 'rgba(0, 0, 0, 0.3)',
-  borderRadius: '4px',
+  borderRadius: '6px',
+  border: '1px solid rgba(77, 102, 128, 0.3)',
+};
+
+const labelStyle: React.CSSProperties = {
+  color: '#8899aa',
+  fontSize: '14px',
+};
+
+const valueStyle: React.CSSProperties = {
+  fontSize: '16px',
+  fontWeight: 'bold',
 };
 
 const companyRowStyle: React.CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
-  gap: '4px',
-  padding: '8px',
-  background: 'rgba(0, 0, 0, 0.3)',
-  borderRadius: '4px',
+  gap: '6px',
+  padding: '10px 12px',
+  background: 'rgba(0, 0, 0, 0.25)',
+  borderRadius: '6px',
+  border: '1px solid rgba(77, 102, 128, 0.2)',
 };
 
 const buttonStyle: React.CSSProperties = {
-  padding: '4px 8px',
-  background: '#335',
-  border: '1px solid #557',
+  padding: '6px 12px',
+  background: 'rgba(51, 64, 89, 1)',
+  border: '1px solid rgba(85, 119, 153, 0.5)',
   color: '#fff',
   cursor: 'pointer',
-  borderRadius: '3px',
+  borderRadius: '4px',
   fontSize: '12px',
+  fontWeight: 'bold',
+  transition: 'all 0.15s',
+};
+
+const buttonDisabledStyle: React.CSSProperties = {
+  ...buttonStyle,
+  background: 'rgba(30, 30, 46, 0.7)',
+  color: '#556',
+  cursor: 'not-allowed',
+};
+
+const separatorStyle: React.CSSProperties = {
+  borderTop: '1px solid rgba(77, 102, 128, 0.4)',
+  margin: '4px 0',
 };
 
 export function StockPanel() {
@@ -64,66 +93,106 @@ export function StockPanel() {
 
   return (
     <div style={panelStyle}>
-      <div style={headerStyle}>STOCK MARKET</div>
+      <div style={titleStyle}>GALACTIC EXCHANGE</div>
 
       <div style={statsRowStyle}>
-        <span>Balance:</span>
-        <span style={{ color: '#4f8' }}>${local.money.toFixed(0)}</span>
+        <span style={labelStyle}>Credits</span>
+        <span style={{ ...valueStyle, color: '#66ff99' }}>
+          {local.money.toLocaleString()}
+        </span>
       </div>
 
       <div style={statsRowStyle}>
-        <span>Unit Cost:</span>
-        <span style={{ color: '#fa4' }}>${gameState.unitCost}</span>
+        <span style={labelStyle}>Unit Cost</span>
+        <span style={{ ...valueStyle, color: '#ffcc80' }}>
+          {gameState.unitCost.toLocaleString()}
+        </span>
       </div>
 
       <div style={statsRowStyle}>
-        <span>Trade Bulk:</span>
-        <span style={{ color: '#aaf' }}>{local.bulkAmount}</span>
+        <span style={labelStyle}>Trade Amount</span>
+        <span style={{ ...valueStyle, color: '#aabbff' }}>
+          {local.bulkAmount}
+        </span>
       </div>
 
       <button
-        style={{ ...buttonStyle, padding: '8px' }}
+        style={local.money >= upgradeCost ? {
+          ...buttonStyle,
+          padding: '10px',
+          background: 'rgba(51, 85, 51, 1)',
+          border: '1px solid rgba(85, 153, 85, 0.5)',
+        } : {
+          ...buttonDisabledStyle,
+          padding: '10px',
+        }}
         onClick={upgradeBulk}
         disabled={local.money < upgradeCost}
       >
-        Upgrade Bulk (${upgradeCost.toFixed(0)})
+        UPGRADE (${upgradeCost.toLocaleString()})
       </button>
 
-      <div style={{ borderTop: '1px solid #334', margin: '8px 0' }} />
+      <div style={separatorStyle} />
+
+      <div style={{ fontSize: '12px', color: '#667788', display: 'flex', justifyContent: 'space-between', padding: '0 4px' }}>
+        <span style={{ flex: 1 }}>COMPANY</span>
+        <span style={{ width: '70px', textAlign: 'right' }}>PRICE</span>
+        <span style={{ width: '35px', textAlign: 'center' }}>+/-</span>
+        <span style={{ width: '50px', textAlign: 'right' }}>OWNED</span>
+      </div>
 
       {gameState.companies.map((company) => {
         const held = local.holdings[company.id] || 0;
         const priceChange = company.price - company.previousPrice;
-        const changeColor = priceChange >= 0 ? '#4f8' : '#f44';
+        const canBuy = local.money >= company.price * local.bulkAmount;
+        const canSell = held >= 1;
+
+        // Price color based on relative value
+        const priceRatio = company.price / 2000;
+        let priceColor = '#ffffaa'; // Yellow (normal)
+        if (priceRatio > 1.2) priceColor = '#ff8888'; // Red (expensive)
+        else if (priceRatio < 0.8) priceColor = '#88ffaa'; // Green (cheap)
 
         return (
           <div key={company.id} style={companyRowStyle}>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ fontWeight: 'bold' }}>{company.name}</span>
-              <span style={{ color: '#ff8' }}>${company.price.toFixed(0)}</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
-              <span style={{ color: changeColor }}>
-                {priceChange >= 0 ? '+' : ''}{priceChange.toFixed(0)}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ flex: 1, fontWeight: 'bold', color: '#ccd' }}>
+                {company.name}
               </span>
-              <span style={{ color: held > 0 ? '#4f8' : '#666' }}>
-                Held: {held}
+              <span style={{ width: '70px', textAlign: 'right', color: priceColor, fontWeight: 'bold' }}>
+                {company.price.toLocaleString()}
+              </span>
+              <span style={{
+                width: '35px',
+                textAlign: 'center',
+                color: priceChange >= 0 ? '#4f8' : '#f44',
+                fontWeight: 'bold',
+              }}>
+                {priceChange >= 0 ? '+' : '-'}
+              </span>
+              <span style={{
+                width: '50px',
+                textAlign: 'right',
+                color: held > 0 ? '#88ffaa' : '#556677',
+                fontWeight: 'bold',
+              }}>
+                {held}
               </span>
             </div>
-            <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+            <div style={{ display: 'flex', gap: '8px' }}>
               <button
-                style={buttonStyle}
+                style={canBuy ? buttonStyle : buttonDisabledStyle}
                 onClick={() => buyStock(company)}
-                disabled={local.money < company.price * local.bulkAmount}
+                disabled={!canBuy}
               >
-                Buy {local.bulkAmount}
+                BUY {local.bulkAmount}
               </button>
               <button
-                style={buttonStyle}
+                style={canSell ? buttonStyle : buttonDisabledStyle}
                 onClick={() => sellStock(company)}
-                disabled={held < 1}
+                disabled={!canSell}
               >
-                Sell {Math.min(held, local.bulkAmount)}
+                SELL {Math.min(held, local.bulkAmount)}
               </button>
             </div>
           </div>
