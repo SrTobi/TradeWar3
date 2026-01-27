@@ -3,7 +3,7 @@ import { OrthographicCamera } from '@react-three/drei';
 import { useGameStore } from '@/store/gameStore';
 import { useUIStore } from '@/store/uiStore';
 import { gameClient } from '@/network/client';
-import { getFactionColor } from '@/types/game';
+import { FACTION_COLORS } from '@/types/game';
 import { Starfield } from '@/components/three/Starfield';
 import { playClick, playGameStart } from '@/audio/sounds';
 
@@ -153,7 +153,7 @@ export function Lobby() {
             COMMANDERS READY ({players.length})
           </p>
           {players.map((player, index) => {
-            const color = getFactionColor(player.factionId, local.factionId);
+            const color = FACTION_COLORS[player.factionId] || FACTION_COLORS.faction1;
             const isLocal = player.factionId === local.factionId;
             const isPlayerHost = index === 0;
             return (
