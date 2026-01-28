@@ -132,13 +132,7 @@ export function Lobby() {
     <div style={containerStyle}>
       <div style={canvasContainerStyle}>
         <Canvas gl={{ antialias: true, alpha: false }}>
-          <OrthographicCamera
-            makeDefault
-            position={[0, 0, 10]}
-            zoom={50}
-            near={0.1}
-            far={100}
-          />
+          <OrthographicCamera makeDefault position={[0, 0, 10]} zoom={50} near={0.1} far={100} />
           <color attach="background" args={['#050508']} />
           <Starfield />
         </Canvas>
@@ -149,7 +143,14 @@ export function Lobby() {
         <p style={subtitleStyle}>Waiting for commanders...</p>
 
         <div style={playerContainerStyle}>
-          <p style={{ color: '#667788', marginBottom: '12px', fontSize: '14px', textAlign: 'center' }}>
+          <p
+            style={{
+              color: '#667788',
+              marginBottom: '12px',
+              fontSize: '14px',
+              textAlign: 'center',
+            }}
+          >
             COMMANDERS READY ({players.length})
           </p>
           {players.map((player, index) => {
@@ -166,14 +167,12 @@ export function Lobby() {
                 }}
               >
                 <div style={{ ...colorBoxStyle, background: color }} />
-                <span style={{ color: '#dde', fontWeight: 'bold', flex: 1 }}>
-                  {player.name}
-                </span>
-                {isPlayerHost && (
-                  <span style={{ color: '#ddaa44', fontSize: '12px' }}>HOST</span>
-                )}
+                <span style={{ color: '#dde', fontWeight: 'bold', flex: 1 }}>{player.name}</span>
+                {isPlayerHost && <span style={{ color: '#ddaa44', fontSize: '12px' }}>HOST</span>}
                 {isLocal && (
-                  <span style={{ color: '#88aaff', fontSize: '12px', marginLeft: '8px' }}>(YOU)</span>
+                  <span style={{ color: '#88aaff', fontSize: '12px', marginLeft: '8px' }}>
+                    (YOU)
+                  </span>
                 )}
               </div>
             );
@@ -181,11 +180,7 @@ export function Lobby() {
         </div>
 
         {canStart ? (
-          <button
-            style={buttonStyle}
-            onClick={handleStartGame}
-            disabled={players.length < 1}
-          >
+          <button style={buttonStyle} onClick={handleStartGame} disabled={players.length < 1}>
             LAUNCH BATTLE
           </button>
         ) : (

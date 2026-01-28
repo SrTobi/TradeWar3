@@ -188,11 +188,13 @@ function Sparkline({ history }: { history: number[] }) {
   const max = Math.max(...history);
   const range = max - min || 1;
 
-  const points = history.map((price, i) => {
-    const x = padding + (i / (history.length - 1)) * (width - padding * 2);
-    const y = height - padding - ((price - min) / range) * (height - padding * 2);
-    return `${x},${y}`;
-  }).join(' ');
+  const points = history
+    .map((price, i) => {
+      const x = padding + (i / (history.length - 1)) * (width - padding * 2);
+      const y = height - padding - ((price - min) / range) * (height - padding * 2);
+      return `${x},${y}`;
+    })
+    .join(' ');
 
   // Color based on trend (first vs last)
   const trend = history[history.length - 1] - history[0];
@@ -211,7 +213,9 @@ function Sparkline({ history }: { history: number[] }) {
       {/* Current price dot */}
       <circle
         cx={width - padding}
-        cy={height - padding - ((history[history.length - 1] - min) / range) * (height - padding * 2)}
+        cy={
+          height - padding - ((history[history.length - 1] - min) / range) * (height - padding * 2)
+        }
         r="2"
         fill={color}
       />
@@ -289,7 +293,8 @@ export function StockPanel() {
           // Price color based on relative value
           const priceRatio = company.price / 2000;
           let priceColor = '#ffffaa'; // Yellow (normal)
-          if (priceRatio > 1.2) priceColor = '#ff8888'; // Red (expensive)
+          if (priceRatio > 1.2)
+            priceColor = '#ff8888'; // Red (expensive)
           else if (priceRatio < 0.8) priceColor = '#88ffaa'; // Green (cheap)
 
           return (
@@ -299,28 +304,38 @@ export function StockPanel() {
                 {company.price.toLocaleString()}
               </span>
               <Sparkline history={history} />
-              <span style={{
-                ...changeStyle,
-                color: priceChange >= 0 ? '#4f8' : '#f44',
-              }}>
+              <span
+                style={{
+                  ...changeStyle,
+                  color: priceChange >= 0 ? '#4f8' : '#f44',
+                }}
+              >
                 {priceChange > 0 ? '+' : priceChange < 0 ? '-' : ''}
               </span>
-              <span style={{
-                ...holdingsStyle,
-                color: held > 0 ? '#88ffaa' : '#556677',
-              }}>
+              <span
+                style={{
+                  ...holdingsStyle,
+                  color: held > 0 ? '#88ffaa' : '#556677',
+                }}
+              >
                 {held}
               </span>
               <button
                 style={canBuy ? buttonStyle : buttonDisabledStyle}
-                onClick={() => { buyStock(company); playBuy(); }}
+                onClick={() => {
+                  buyStock(company);
+                  playBuy();
+                }}
                 disabled={!canBuy}
               >
                 BUY
               </button>
               <button
                 style={canSell ? buttonStyle : buttonDisabledStyle}
-                onClick={() => { sellStock(company); playSell(); }}
+                onClick={() => {
+                  sellStock(company);
+                  playSell();
+                }}
                 disabled={!canSell}
               >
                 SELL
@@ -337,7 +352,10 @@ export function StockPanel() {
         </span>
         <button
           style={local.money >= upgradeCost ? upgradeButtonStyle : upgradeDisabledStyle}
-          onClick={() => { upgradeBulk(); playUpgrade(); }}
+          onClick={() => {
+            upgradeBulk();
+            playUpgrade();
+          }}
           disabled={local.money < upgradeCost}
         >
           UPGRADE (${upgradeCost.toLocaleString()})

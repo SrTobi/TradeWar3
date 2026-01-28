@@ -73,20 +73,14 @@ export function Hex({ country, size, onClick }: HexProps) {
     return [x, y, 0] as [number, number, number];
   }, [country.coords.q, country.coords.r, size]);
 
-  const baseColor = useMemo(
-    () => new THREE.Color(getFactionColor(owner)),
-    [owner]
-  );
+  const baseColor = useMemo(() => new THREE.Color(getFactionColor(owner)), [owner]);
 
   // Hex vertices for flat-top orientation
   const hexVertices = useMemo(() => {
     const verts: THREE.Vector2[] = [];
     for (let i = 0; i < 6; i++) {
       const angle = (Math.PI / 3) * i;
-      verts.push(new THREE.Vector2(
-        size * 0.95 * Math.cos(angle),
-        size * 0.95 * Math.sin(angle)
-      ));
+      verts.push(new THREE.Vector2(size * 0.95 * Math.cos(angle), size * 0.95 * Math.sin(angle)));
     }
     return verts;
   }, [size]);
@@ -126,11 +120,9 @@ export function Hex({ country, size, onClick }: HexProps) {
     const points: THREE.Vector3[] = [];
     for (let i = 0; i <= 6; i++) {
       const angle = (Math.PI / 3) * (i % 6);
-      points.push(new THREE.Vector3(
-        size * 0.6 * Math.cos(angle),
-        size * 0.6 * Math.sin(angle),
-        0.02
-      ));
+      points.push(
+        new THREE.Vector3(size * 0.6 * Math.cos(angle), size * 0.6 * Math.sin(angle), 0.02)
+      );
     }
     return new THREE.BufferGeometry().setFromPoints(points);
   }, [size]);
@@ -140,11 +132,9 @@ export function Hex({ country, size, onClick }: HexProps) {
     const points: THREE.Vector3[] = [];
     for (let i = 0; i <= 6; i++) {
       const angle = (Math.PI / 3) * (i % 6);
-      points.push(new THREE.Vector3(
-        size * 0.95 * Math.cos(angle),
-        size * 0.95 * Math.sin(angle),
-        0.01
-      ));
+      points.push(
+        new THREE.Vector3(size * 0.95 * Math.cos(angle), size * 0.95 * Math.sin(angle), 0.01)
+      );
     }
     return new THREE.BufferGeometry().setFromPoints(points);
   }, [size]);
@@ -183,7 +173,7 @@ export function Hex({ country, size, onClick }: HexProps) {
 
     // Update glow rings with pulsing
     if (glowRingsRef.current && !isNeutral) {
-      const glowPulse = (Math.sin(pulseTime * 2) + 1) / 2 * 0.2 + 0.15;
+      const glowPulse = ((Math.sin(pulseTime * 2) + 1) / 2) * 0.2 + 0.15;
       glowRingsRef.current.children.forEach((child, i) => {
         const mesh = child as THREE.Mesh;
         const mat = mesh.material as THREE.MeshBasicMaterial;
@@ -228,28 +218,17 @@ export function Hex({ country, size, onClick }: HexProps) {
         onPointerEnter={() => setHoveredHex(country.coords)}
         onPointerLeave={() => setHoveredHex(null)}
       >
-        <meshBasicMaterial
-          vertexColors
-          transparent
-          opacity={isHovered ? 1.0 : 0.9}
-        />
+        <meshBasicMaterial vertexColors transparent opacity={isHovered ? 1.0 : 0.9} />
       </mesh>
 
       {/* Border */}
       <lineLoop geometry={borderGeometry}>
-        <lineBasicMaterial
-          color={borderColor}
-          linewidth={isHovered ? 3 : 2}
-        />
+        <lineBasicMaterial color={borderColor} linewidth={isHovered ? 3 : 2} />
       </lineLoop>
 
       {/* Inner highlight */}
       <lineLoop ref={innerHighlightRef} geometry={innerRingGeometry}>
-        <lineBasicMaterial
-          color={lighten(baseColor, 0.4)}
-          transparent
-          opacity={0.4}
-        />
+        <lineBasicMaterial color={lighten(baseColor, 0.4)} transparent opacity={0.4} />
       </lineLoop>
 
       {/* Unit count badges */}
@@ -258,7 +237,7 @@ export function Hex({ country, size, onClick }: HexProps) {
           {unitEntries.map(([factionId, count], idx) => {
             const badgeColor = new THREE.Color(getFactionColor(factionId));
             const textColor = getContrastColor(badgeColor);
-            const yOffset = (unitEntries.length - 1) / 2 * size * 0.4 - idx * size * 0.4;
+            const yOffset = ((unitEntries.length - 1) / 2) * size * 0.4 - idx * size * 0.4;
 
             return (
               <group key={factionId} position={[0, yOffset, 0]}>

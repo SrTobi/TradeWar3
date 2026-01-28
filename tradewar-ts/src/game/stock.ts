@@ -8,7 +8,9 @@ export function createCompanies(count: number): Company[] {
   return shuffled.slice(0, count).map((name, i) => ({
     id: `company${i}`,
     name,
-    price: Math.round(GAME.STOCK_MIN_PRICE + Math.random() * (GAME.STOCK_MAX_PRICE - GAME.STOCK_MIN_PRICE)),
+    price: Math.round(
+      GAME.STOCK_MIN_PRICE + Math.random() * (GAME.STOCK_MAX_PRICE - GAME.STOCK_MIN_PRICE)
+    ),
     previousPrice: GAME.STOCK_MEAN_TARGET,
     nextUpdateTime: now + randomUpdateInterval(),
   }));
@@ -19,7 +21,8 @@ export function updateStockPrice(company: Company, now: number): Company {
 
   // Box-Muller transform for gaussian random
   const gaussianRandom = () => {
-    let u = 0, v = 0;
+    let u = 0,
+      v = 0;
     while (u === 0) u = Math.random();
     while (v === 0) v = Math.random();
     return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);

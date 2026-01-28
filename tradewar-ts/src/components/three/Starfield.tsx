@@ -42,42 +42,26 @@ function getStarColor(): THREE.Color {
   const roll = Math.random();
   if (roll < 0.5) {
     // White-blue
-    return new THREE.Color(
-      0.9 + Math.random() * 0.1,
-      0.9 + Math.random() * 0.1,
-      1.0
-    );
+    return new THREE.Color(0.9 + Math.random() * 0.1, 0.9 + Math.random() * 0.1, 1.0);
   } else if (roll < 0.75) {
     // Blue
-    return new THREE.Color(
-      0.7 + Math.random() * 0.3,
-      0.8 + Math.random() * 0.2,
-      1.0
-    );
+    return new THREE.Color(0.7 + Math.random() * 0.3, 0.8 + Math.random() * 0.2, 1.0);
   } else if (roll < 0.9) {
     // Yellow
-    return new THREE.Color(
-      1.0,
-      1.0,
-      0.7 + Math.random() * 0.3
-    );
+    return new THREE.Color(1.0, 1.0, 0.7 + Math.random() * 0.3);
   } else {
     // Orange
-    return new THREE.Color(
-      1.0,
-      0.7 + Math.random() * 0.2,
-      0.5 + Math.random() * 0.2
-    );
+    return new THREE.Color(1.0, 0.7 + Math.random() * 0.2, 0.5 + Math.random() * 0.2);
   }
 }
 
 // Nebula colors from original
 const NEBULA_COLORS = [
-  { r: 0.2, g: 0.1, b: 0.4, a: 0.15 },  // Purple
-  { r: 0.1, g: 0.2, b: 0.4, a: 0.12 },  // Deep blue
-  { r: 0.3, g: 0.1, b: 0.2, a: 0.10 },  // Magenta
-  { r: 0.1, g: 0.3, b: 0.3, a: 0.08 },  // Teal
-  { r: 0.4, g: 0.2, b: 0.1, a: 0.10 },  // Orange-brown
+  { r: 0.2, g: 0.1, b: 0.4, a: 0.15 }, // Purple
+  { r: 0.1, g: 0.2, b: 0.4, a: 0.12 }, // Deep blue
+  { r: 0.3, g: 0.1, b: 0.2, a: 0.1 }, // Magenta
+  { r: 0.1, g: 0.3, b: 0.3, a: 0.08 }, // Teal
+  { r: 0.4, g: 0.2, b: 0.1, a: 0.1 }, // Orange-brown
 ];
 
 export function Starfield() {
@@ -85,7 +69,13 @@ export function Starfield() {
   const starsRef = useRef<Star[]>([]);
   const nebulasRef = useRef<Nebula[]>([]);
   const shootingStarRef = useRef<ShootingStar>({
-    x: 0, y: 0, angle: 0, speed: 0, life: 0, maxLife: 0, active: false
+    x: 0,
+    y: 0,
+    angle: 0,
+    speed: 0,
+    life: 0,
+    maxLife: 0,
+    active: false,
   });
   const nextShootingStarRef = useRef(2 + Math.random() * 4);
 
@@ -188,7 +178,7 @@ export function Starfield() {
 
         // Twinkle
         star.twinklePhase += star.twinkleSpeed * delta;
-        const twinkle = (Math.sin(star.twinklePhase) + 1) / 2 * 0.4 + 0.6;
+        const twinkle = ((Math.sin(star.twinklePhase) + 1) / 2) * 0.4 + 0.6;
         const brightness = star.brightness * twinkle;
 
         // Update instance
@@ -321,9 +311,7 @@ export function Starfield() {
       </mesh>
 
       {/* Nebulas with layered soft effect */}
-      <group ref={nebulaGroupRef}>
-        {nebulaElements}
-      </group>
+      <group ref={nebulaGroupRef}>{nebulaElements}</group>
 
       {/* Star glow layer (for bright stars) */}
       <instancedMesh ref={starGlowMeshRef} args={[undefined, undefined, STAR_COUNT]}>

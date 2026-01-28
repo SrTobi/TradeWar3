@@ -150,7 +150,8 @@ const statusDotStyle = (phase: string): React.CSSProperties => ({
   display: 'inline-block',
   marginRight: '8px',
   background: phase === 'lobby' ? '#44dd66' : phase === 'playing' ? '#ddaa44' : '#666666',
-  boxShadow: phase === 'lobby' ? '0 0 6px #44dd66' : phase === 'playing' ? '0 0 6px #ddaa44' : 'none',
+  boxShadow:
+    phase === 'lobby' ? '0 0 6px #44dd66' : phase === 'playing' ? '0 0 6px #ddaa44' : 'none',
 });
 
 const errorStyle: React.CSSProperties = {
@@ -302,13 +303,7 @@ export function MainMenu() {
     <div style={containerStyle}>
       <div style={canvasContainerStyle}>
         <Canvas gl={{ antialias: true, alpha: false }}>
-          <OrthographicCamera
-            makeDefault
-            position={[0, 0, 10]}
-            zoom={50}
-            near={0.1}
-            far={100}
-          />
+          <OrthographicCamera makeDefault position={[0, 0, 10]} zoom={50} near={0.1} far={100} />
           <color attach="background" args={['#050508']} />
           <Starfield />
         </Canvas>
@@ -320,7 +315,9 @@ export function MainMenu() {
 
         <div style={panelStyle}>
           {connecting ? (
-            <div style={statusStyle}>Connecting to {server.address}:{server.port}...</div>
+            <div style={statusStyle}>
+              Connecting to {server.address}:{server.port}...
+            </div>
           ) : !connected ? (
             <div style={errorStyle}>{error || 'Not connected'}</div>
           ) : (
@@ -341,7 +338,8 @@ export function MainMenu() {
                 <div style={gameListStyle}>
                   {lobbyGames.length === 0 ? (
                     <div style={emptyStyle}>
-                      No games available.<br />
+                      No games available.
+                      <br />
                       Create one with the button below!
                     </div>
                   ) : (
@@ -354,15 +352,10 @@ export function MainMenu() {
                           </div>
                           <div style={gameDetailsStyle}>
                             {game.playerCount}/{game.maxPlayers} players
-                            {game.players.length > 0 && (
-                              <> - {game.players.join(', ')}</>
-                            )}
+                            {game.players.length > 0 && <> - {game.players.join(', ')}</>}
                           </div>
                         </div>
-                        <button
-                          style={joinButtonStyle}
-                          onClick={() => handleJoin(game.id)}
-                        >
+                        <button style={joinButtonStyle} onClick={() => handleJoin(game.id)}>
                           JOIN
                         </button>
                       </div>

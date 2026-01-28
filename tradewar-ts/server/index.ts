@@ -272,7 +272,9 @@ class GameServer {
       return {
         coords,
         units: {
-          neutral: GAME.NEUTRAL_UNITS_MIN + Math.floor(Math.random() * (GAME.NEUTRAL_UNITS_MAX - GAME.NEUTRAL_UNITS_MIN)),
+          neutral:
+            GAME.NEUTRAL_UNITS_MIN +
+            Math.floor(Math.random() * (GAME.NEUTRAL_UNITS_MAX - GAME.NEUTRAL_UNITS_MIN)),
         },
         nextBattleTime: Date.now() + Math.random() * GAME.BATTLE_MAX_INTERVAL,
       };

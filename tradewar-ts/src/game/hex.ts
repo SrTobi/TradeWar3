@@ -53,8 +53,8 @@ export function hexToPixel(coord: HexCoord, size: number): { x: number; y: numbe
 }
 
 export function pixelToHex(x: number, y: number, size: number): HexCoord {
-  const q = (2 / 3) * x / size;
-  const r = (-1 / 3) * x / size + (Math.sqrt(3) / 3) * y / size;
+  const q = ((2 / 3) * x) / size;
+  const r = ((-1 / 3) * x) / size + ((Math.sqrt(3) / 3) * y) / size;
   return hexRound({ q, r });
 }
 

@@ -131,7 +131,9 @@ export function canPlaceUnits(
 }
 
 function randomBattleInterval(): number {
-  return GAME.BATTLE_MIN_INTERVAL + Math.random() * (GAME.BATTLE_MAX_INTERVAL - GAME.BATTLE_MIN_INTERVAL);
+  return (
+    GAME.BATTLE_MIN_INTERVAL + Math.random() * (GAME.BATTLE_MAX_INTERVAL - GAME.BATTLE_MIN_INTERVAL)
+  );
 }
 
 export function checkWinner(countries: Country[], factions: Faction[]): Faction | null {

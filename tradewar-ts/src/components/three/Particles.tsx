@@ -191,9 +191,10 @@ export function Particles({ countries, size }: ParticlesProps) {
 
           // Flash starts big and fades quickly
           const flashProgress = Math.min(progress * 3, 1);
-          const alpha = flashProgress < 0.3
-            ? flashProgress / 0.3
-            : Math.max(0, 1 - (flashProgress - 0.3) / 0.7);
+          const alpha =
+            flashProgress < 0.3
+              ? flashProgress / 0.3
+              : Math.max(0, 1 - (flashProgress - 0.3) / 0.7);
           const flashScale = size * (0.3 + progress * 0.5) * alpha;
 
           tempMatrix.current.makeScale(flashScale, flashScale, 1);

@@ -61,7 +61,7 @@ export function Connections({ countries, size }: ConnectionsProps) {
 
   useFrame((_, delta) => {
     pulseTimeRef.current += delta;
-    opacityRef.current = (Math.sin(pulseTimeRef.current * 1.5) + 1) / 2 * 0.3 + 0.4;
+    opacityRef.current = ((Math.sin(pulseTimeRef.current * 1.5) + 1) / 2) * 0.3 + 0.4;
   });
 
   if (connections.length === 0) return null;
@@ -77,21 +77,9 @@ export function Connections({ countries, size }: ConnectionsProps) {
         return (
           <group key={i}>
             {/* Outer glow */}
-            <Line
-              points={points}
-              color={conn.color}
-              lineWidth={4}
-              transparent
-              opacity={0.4}
-            />
+            <Line points={points} color={conn.color} lineWidth={4} transparent opacity={0.4} />
             {/* Inner bright core */}
-            <Line
-              points={points}
-              color={conn.color}
-              lineWidth={2}
-              transparent
-              opacity={0.8}
-            />
+            <Line points={points} color={conn.color} lineWidth={2} transparent opacity={0.8} />
           </group>
         );
       })}
