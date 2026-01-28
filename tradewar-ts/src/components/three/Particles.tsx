@@ -55,7 +55,7 @@ export function Particles({ countries, size }: ParticlesProps) {
       if (prev) {
         // Check if any faction lost units (battle occurred)
         let battleOccurred = false;
-        let battleColor = new THREE.Color(1, 0.5, 0.2); // Default orange
+        const battleColor = new THREE.Color(1, 0.5, 0.2); // Default orange
 
         for (const [factionId, count] of Object.entries(country.units)) {
           const prevCount = prev[factionId] || 0;

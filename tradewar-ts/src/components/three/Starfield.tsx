@@ -267,7 +267,7 @@ export function Starfield() {
       shootingStar.y -= Math.sin(shootingStar.angle) * shootingStar.speed * delta;
 
       const progress = shootingStar.life / shootingStar.maxLife;
-      let alpha = progress < 0.3 ? progress / 0.3 : (1 - progress) / 0.7;
+      const alpha = progress < 0.3 ? progress / 0.3 : (1 - progress) / 0.7;
 
       shootingStarGroupRef.current.position.set(shootingStar.x, shootingStar.y, -0.5);
       shootingStarGroupRef.current.rotation.z = -shootingStar.angle;

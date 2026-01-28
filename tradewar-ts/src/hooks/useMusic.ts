@@ -33,7 +33,7 @@ class MusicManager {
       this.loaded.set(track, audio);
       return audio;
     } catch (e) {
-      console.warn(`Failed to load music track: ${track}`);
+      console.warn(`Failed to load music track: ${track} (${e})`);
       return null;
     }
   }
