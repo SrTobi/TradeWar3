@@ -137,20 +137,20 @@ function randomBattleInterval(): number {
 }
 
 export function checkWinner(countries: Country[], factions: Faction[]): Faction | null {
-  const playerFactions = factions.filter((f) => f.id !== 'neutral');
-  const factionsWithTerritory = new Set<string>();
+  // find the one faction that has units on the map
+  let factionWithUnits: string | null = null;
 
   for (const country of countries) {
-    const owner = getCountryOwner(country);
-    if (owner !== 'neutral') {
-      factionsWithTerritory.add(owner);
+    for (const [factionId, units] of Object.entries(country.units)) {
+      if (units > 0 && factionId !== 'neutral') {
+        if (factionWithUnits === null) {
+          factionWithUnits = factionId;
+        } else if (factionWithUnits !== factionId) {
+          return null; // More than one faction has units
+        }
+      }
     }
   }
-
-  if (factionsWithTerritory.size === 1) {
-    const winnerId = [...factionsWithTerritory][0];
-    return playerFactions.find((f) => f.id === winnerId) || null;
-  }
-
-  return null;
+  
+  return factions.find((f) => f.id === factionWithUnits) || null;
 }
