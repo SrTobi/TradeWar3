@@ -8,6 +8,7 @@ export class GameClient {
   private handlers: Set<MessageHandler> = new Set();
 
   connect(address: string, port: number): Promise<void> {
+    console.log(`Connecting to ws://${address}:${port}`);
     return new Promise((resolve, reject) => {
       const url = `ws://${address}:${port}`;
       this.ws = new WebSocket(url);

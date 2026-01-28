@@ -191,7 +191,8 @@ function getServerAddress(): { address: string; port: number } {
       port: parts[1] ? parseInt(parts[1]) : GAME.SERVER_PORT,
     };
   }
-  return { address: 'localhost', port: GAME.SERVER_PORT };
+  // Use the current website's hostname as the default address
+  return { address: window.location.hostname, port: GAME.SERVER_PORT };
 }
 
 export function MainMenu() {
