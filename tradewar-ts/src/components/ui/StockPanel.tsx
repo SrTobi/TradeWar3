@@ -255,6 +255,9 @@ export function StockPanel() {
 
   const upgradeCost = calculateBulkUpgradeCost(local.bulkAmount);
 
+  const meta = import.meta as { env?: unknown };
+  const devMode = meta.env !== undefined;
+
   return (
     <div style={panelStyle}>
       <div style={titleStyle}>GALACTIC EXCHANGE</div>
@@ -264,6 +267,28 @@ export function StockPanel() {
         <div style={balanceStyle}>
           <span style={balanceValueStyle}>{local.money.toLocaleString()}</span>
           <span style={balanceLabelStyle}>Credits</span>
+          {devMode && (
+            <button
+              style={{
+                marginLeft: 12,
+                padding: '2px 10px',
+                fontSize: 13,
+                background: '#222',
+                color: '#6f6',
+                border: '1px solid #393',
+                borderRadius: 4,
+                cursor: 'pointer',
+              }}
+              onClick={() =>
+                useGameStore.setState((s) => ({
+                  local: { ...s.local, money: s.local.money + 1_000_000 },
+                }))
+              }
+              title="Add 1,000,000 credits (devmode)"
+            >
+              +1M €
+            </button>
+          )}
         </div>
         <span style={unitCostStyle}>Unit: {gameState.unitCost.toLocaleString()}</span>
       </div>
