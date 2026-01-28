@@ -255,8 +255,7 @@ export function StockPanel() {
 
   const upgradeCost = calculateBulkUpgradeCost(local.bulkAmount);
 
-  const meta = import.meta as { env?: unknown };
-  const devMode = meta.env !== undefined;
+  const devMode = window.location.hostname === 'localhost';
 
   return (
     <div style={panelStyle}>
