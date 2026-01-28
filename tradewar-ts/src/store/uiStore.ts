@@ -19,8 +19,6 @@ interface UIStore {
   removeBattleParticle: (id: string) => void;
   playerName: string;
   setPlayerName: (name: string) => void;
-  serverAddress: string;
-  setServerAddress: (address: string) => void;
   isHost: boolean;
   setIsHost: (isHost: boolean) => void;
 }
@@ -70,9 +68,6 @@ export const useUIStore = create<UIStore>((set) => ({
     savePlayerName(name);
     set({ playerName: name });
   },
-
-  serverAddress: 'localhost',
-  setServerAddress: (address) => set({ serverAddress: address }),
 
   isHost: false,
   setIsHost: (isHost) => set({ isHost }),
