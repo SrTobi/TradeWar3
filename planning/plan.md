@@ -57,10 +57,10 @@ TradeWar 3: Galaxy is a strategy game where players earn money through a stock m
 - Add sound effects and UI feedback.
 
 ## Dependencies & Considerations (Original Implementation)
-- **Framework**: Built using Scala 3 and LibGDX.
-- **UI Library**: Consider using `scene2d.ui` for the stock market panel and buttons.
-- **Randomness**: Ensure seeds are handled correctly for reproducible/fair game starts.
-- **Performance**: Monitor performance of the hexagonal grid rendering and simultaneous battle calculations as the map grows.
+- **Framework**: Was built using Scala 3 and LibGDX.
+- **UI Library**: Used `scene2d.ui` for the stock market panel and buttons.
+- **Randomness**: Seeds were handled correctly for reproducible/fair game starts.
+- **Performance**: Monitoring of hexagonal grid rendering and simultaneous battle calculations as the map grew.
 
 ## Risks
 - **AI Complexity**: Making the AI "smart" enough to be challenging without being unfair.
