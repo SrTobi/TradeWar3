@@ -1,4 +1,6 @@
-# Development Plan - TradeWar 3: Galaxy
+# Development Plan - TradeWar 3: Galaxy (Original Scala Implementation)
+
+> **Note**: This document describes the original Scala/LibGDX implementation which has been removed. The game has been rewritten in TypeScript.
 
 ## Overview
 TradeWar 3: Galaxy is a strategy game where players earn money through a stock market simulation to fund their war machinery. The goal is to dominate a hexagonal map by strategically placing units and defeating other players. The game features a split-screen interface: the left side handles the stock market, and the right side displays the hexagonal war map.
@@ -54,7 +56,7 @@ TradeWar 3: Galaxy is a strategy game where players earn money through a stock m
 - Refine battle mechanics and network stability.
 - Add sound effects and UI feedback.
 
-## Dependencies & Considerations
+## Dependencies & Considerations (Original Implementation)
 - **Framework**: Built using Scala 3 and LibGDX.
 - **UI Library**: Consider using `scene2d.ui` for the stock market panel and buttons.
 - **Randomness**: Ensure seeds are handled correctly for reproducible/fair game starts.

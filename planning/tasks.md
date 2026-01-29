@@ -1,4 +1,6 @@
-# Task List - TradeWar 3: Galaxy
+# Task List - TradeWar 3: Galaxy (Original Scala Implementation)
+
+> **Note**: This document describes tasks for the original Scala/LibGDX implementation which has been removed. The game has been rewritten in TypeScript.
 
 ## Phase 1: Foundation & Main Menu
 1. [x] Define core data models for the Game State (Players, Companies, Map).
