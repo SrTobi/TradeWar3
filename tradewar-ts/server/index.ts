@@ -130,6 +130,7 @@ class GameServer {
     // Check if game should end (only one player left or no players)
     if (room.gameState.players.length <= 1) {
       const winner = checkWinner(room.gameState.countries, room.gameState.factions);
+      // End game if there's a winner, no players left, or only one player remaining
       if (winner || room.gameState.players.length === 0) {
         room.gameState.phase = 'ended';
         room.gameState.winner = winner;
@@ -140,13 +141,16 @@ class GameServer {
         this.broadcastGameList();
       }
     }
+
+    // Broadcast updated game state to remaining players
+    this.broadcastToGame(room, { type: 'gameState', state: room.gameState });
   }
 
   private handleDisconnect(playerId: string): void {
     const client = this.clients.get(playerId);
     if (client?.currentGameId) {
       const room = this.games.get(client.currentGameId);
-      // If game is in progress, convert player's units to neutral
+      // Handle player disconnection during active game by converting units to neutral and removing player
       if (room?.gameState?.phase === 'playing') {
         this.handlePlayerDisconnectDuringGame(client, room);
       } else {
