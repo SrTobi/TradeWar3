@@ -10,4 +10,5 @@ gen/
 .bsp
 .idea
 .junie
-cs
+# Coursier launcher (Scala build tool)
+/cs

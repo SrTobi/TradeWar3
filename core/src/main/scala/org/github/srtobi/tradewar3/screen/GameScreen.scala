@@ -86,10 +86,11 @@ class GameScreen(game: Tradewar3,
           false
     }
     
-    // Use InputMultiplexer to handle both stage input and keyboard shortcuts
+    // Use InputMultiplexer to handle both keyboard shortcuts and stage input
+    // Keyboard adapter is added first to ensure shortcuts are checked before UI elements
     val multiplexer = new InputMultiplexer()
-    multiplexer.addProcessor(stage)
     multiplexer.addProcessor(keyboardAdapter)
+    multiplexer.addProcessor(stage)
     Gdx.input.setInputProcessor(multiplexer)
     
     skin = createGameSkin()
