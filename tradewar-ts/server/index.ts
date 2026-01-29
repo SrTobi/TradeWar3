@@ -193,6 +193,28 @@ class GameServer {
     room.clients.delete(client.playerId);
     this.send(client.ws, { type: 'leftGame' });
 
+    // If game is in progress, remove player from game and neutralize their countries
+    if (room.gameState && room.gameState.phase === 'playing') {
+      const playerEntry = room.gameState.players.find((p) => p.id === client.playerId);
+      if (playerEntry) {
+        const factionId = playerEntry.factionId;
+
+        for (let i = 0; i < room.gameState.countries.length; i++) {
+          const country = room.gameState.countries[i];
+          const units = country.units;
+          const remainingUnits = units[factionId] || 0;
+          if (remainingUnits > 0) {
+            // Remove any lingering units of the departed faction and add them to neutral
+            delete units[factionId];
+            units.neutral = (units.neutral || 0) + remainingUnits;
+          }
+        }
+
+        // Recalculate unit cost and broadcast updated state
+        room.gameState.unitCost = calculateUnitCost(room.gameState.countries);
+      }
+    }
+
     // If room is empty or host left, clean up
     if (room.clients.size === 0 || room.hostId === client.playerId) {
       this.destroyGame(room);
