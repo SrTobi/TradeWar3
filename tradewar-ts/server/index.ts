@@ -92,10 +92,66 @@ class GameServer {
     }
   }
 
+  private handlePlayerDisconnectDuringGame(client: ConnectedClient, room: GameRoom): void {
+    if (!room.gameState) return;
+
+    // Find the player's faction
+    const player = room.gameState.players.find((p) => p.id === client.playerId);
+    if (!player) return;
+
+    const factionId = player.factionId;
+    console.log(`Player ${client.playerName} (${factionId}) disconnected during game ${room.id}`);
+
+    // Convert all units from this faction to neutral
+    room.gameState.countries = room.gameState.countries.map((country) => {
+      const units = { ...country.units };
+      
+      if (units[factionId] !== undefined) {
+        const factionUnits = units[factionId];
+        delete units[factionId];
+        
+        // Add to neutral units
+        units.neutral = (units.neutral || 0) + factionUnits;
+      }
+      
+      return { ...country, units };
+    });
+
+    // Remove player from players list
+    room.gameState.players = room.gameState.players.filter((p) => p.id !== client.playerId);
+
+    // Remove faction from factions list
+    room.gameState.factions = room.gameState.factions.filter((f) => f.id !== factionId);
+
+    // Remove client from room
+    room.clients.delete(client.playerId);
+    client.currentGameId = null;
+
+    // Check if game should end (only one player left or no players)
+    if (room.gameState.players.length <= 1) {
+      const winner = checkWinner(room.gameState.countries, room.gameState.factions);
+      if (winner || room.gameState.players.length === 0) {
+        room.gameState.phase = 'ended';
+        room.gameState.winner = winner;
+        if (room.gameLoop) {
+          clearInterval(room.gameLoop);
+          room.gameLoop = null;
+        }
+        this.broadcastGameList();
+      }
+    }
+  }
+
   private handleDisconnect(playerId: string): void {
     const client = this.clients.get(playerId);
     if (client?.currentGameId) {
-      this.handleLeaveGame(client);
+      const room = this.games.get(client.currentGameId);
+      // If game is in progress, convert player's units to neutral
+      if (room?.gameState?.phase === 'playing') {
+        this.handlePlayerDisconnectDuringGame(client, room);
+      } else {
+        this.handleLeaveGame(client);
+      }
     }
     this.wsToPlayer.delete(client?.ws as WebSocket);
     this.clients.delete(playerId);
