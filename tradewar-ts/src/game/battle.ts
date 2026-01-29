@@ -138,17 +138,18 @@ function randomBattleInterval(): number {
 
 export function checkWinner(countries: Country[], factions: Faction[]): Faction | null {
   const playerFactions = factions.filter((f) => f.id !== 'neutral');
-  const factionsWithTerritory = new Set<string>();
+  const factionsWithUnits = new Set<string>();
 
   for (const country of countries) {
-    const owner = getCountryOwner(country);
-    if (owner !== 'neutral') {
-      factionsWithTerritory.add(owner);
+    for (const [factionId, units] of Object.entries(country.units)) {
+      if (factionId !== 'neutral' && units > 0) {
+        factionsWithUnits.add(factionId);
+      }
     }
   }
 
-  if (factionsWithTerritory.size === 1) {
-    const winnerId = [...factionsWithTerritory][0];
+  if (factionsWithUnits.size === 1) {
+    const winnerId = [...factionsWithUnits][0];
     return playerFactions.find((f) => f.id === winnerId) || null;
   }
 
