@@ -1,6 +1,6 @@
 package org.github.srtobi.tradewar3.screen
 
-import com.badlogic.gdx.{Gdx, Input}
+import com.badlogic.gdx.{Gdx, Input, InputAdapter, InputMultiplexer}
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator.FreeTypeFontParameter
 import com.badlogic.gdx.graphics.{Color, Pixmap, Texture}
@@ -76,7 +76,22 @@ class GameScreen(game: Tradewar3,
   )
 
   override def show(): Unit =
-    Gdx.input.setInputProcessor(stage)
+    // Create InputAdapter to handle keyboard shortcuts
+    val keyboardAdapter = new InputAdapter {
+      override def keyDown(keycode: Int): Boolean =
+        if keycode == Input.Keys.SPACE && lastAction != null then
+          lastAction()
+          true
+        else
+          false
+    }
+    
+    // Use InputMultiplexer to handle both stage input and keyboard shortcuts
+    val multiplexer = new InputMultiplexer()
+    multiplexer.addProcessor(stage)
+    multiplexer.addProcessor(keyboardAdapter)
+    Gdx.input.setInputProcessor(multiplexer)
+    
     skin = createGameSkin()
     MusicManager.playGameMusic()
 
@@ -257,9 +272,6 @@ class GameScreen(game: Tradewar3,
 
     if gameState != null then
         updateMusic(delta)
-
-        if Gdx.input.isKeyJustPressed(Input.Keys.SPACE) && lastAction != null then
-            lastAction()
 
         stage.act(delta)
         stage.draw()
